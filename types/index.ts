@@ -1,4 +1,4 @@
-export const SERVICE_STATUSES = ["UP", "SLOW", "DOWN", "PENDING"] as const;
+export const SERVICE_STATUSES = ['UP', 'SLOW', 'DOWN', 'PENDING'] as const;
 export type ServiceStatus = (typeof SERVICE_STATUSES)[number];
 
 export interface Service {
@@ -18,7 +18,7 @@ export interface ServicesData {
 }
 
 export interface CheckResult {
-  status: Exclude<ServiceStatus, "PENDING">;
+  status: Exclude<ServiceStatus, 'PENDING'>;
   latencyMs: number;
 }
 

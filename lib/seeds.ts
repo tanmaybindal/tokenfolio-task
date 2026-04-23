@@ -1,8 +1,10 @@
-import fs from "fs";
-import path from "path";
-import crypto from "crypto";
-import { readServices, writeServices } from "./storage";
-import { Service } from "@/types";
+import crypto from 'crypto';
+import fs from 'fs';
+import path from 'path';
+
+import { Service } from '@/types';
+
+import { readServices, writeServices } from './storage';
 
 interface SeedEntry {
   name: string;
@@ -11,23 +13,23 @@ interface SeedEntry {
 
 export function applySeedsIfEmpty(): void {
   // SEED_ON_STARTUP=false disables seeding entirely (e.g. for clean-slate demos)
-  if (process.env.SEED_ON_STARTUP === "false") return;
+  if (process.env.SEED_ON_STARTUP === 'false') return;
 
   const data = readServices();
   if (data.services.length > 0) return;
 
-  const seedsPath = path.join(process.cwd(), "config", "seeds.json");
+  const seedsPath = path.join(process.cwd(), 'config', 'seeds.json');
   if (!fs.existsSync(seedsPath)) return;
 
-  const seeds: SeedEntry[] = JSON.parse(fs.readFileSync(seedsPath, "utf-8"));
+  const seeds: SeedEntry[] = JSON.parse(fs.readFileSync(seedsPath, 'utf-8'));
   if (seeds.length === 0) return;
 
   const services: Service[] = seeds.map((seed) => ({
-    id: crypto.randomBytes(4).toString("hex"),
+    id: crypto.randomBytes(4).toString('hex'),
     name: seed.name,
     url: seed.url,
     createdAt: new Date().toISOString(),
-    status: "PENDING",
+    status: 'PENDING',
     latencyMs: null,
     lastCheckedAt: null,
     healthScore: null,

@@ -1,26 +1,27 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import { useState } from 'react';
+import { toast } from 'sonner';
+
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+} from '@/components/ui/dialog';
 import {
   Field,
+  FieldDescription,
   FieldGroup,
   FieldLabel,
-  FieldDescription,
-} from "@/components/ui/field";
-import { Spinner } from "@/components/ui/spinner";
-import { ServiceResponse } from "@/types";
+} from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
+import { Spinner } from '@/components/ui/spinner';
+import { ServiceResponse } from '@/types';
 
-type Mode = "add" | "edit";
+type Mode = 'add' | 'edit';
 
 interface ServiceDialogProps {
   open: boolean;
@@ -39,12 +40,12 @@ export function ServiceDialog(props: ServiceDialogProps) {
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {props.mode === "add" ? "Add Service" : "Edit Service"}
+            {props.mode === 'add' ? 'Add Service' : 'Edit Service'}
           </DialogTitle>
           <DialogDescription>
-            {props.mode === "add"
-              ? "Enter the service name and URL to monitor."
-              : "Update the service name and URL."}
+            {props.mode === 'add'
+              ? 'Enter the service name and URL to monitor.'
+              : 'Update the service name and URL.'}
           </DialogDescription>
         </DialogHeader>
         {props.open && <DialogForm {...props} />}
@@ -60,61 +61,75 @@ function DialogForm({
   onOpenChange,
 }: ServiceDialogProps) {
   const [name, setName] = useState(
-    mode === "edit" && service ? service.name : "",
+    mode === 'edit' && service ? service.name : '',
   );
-  const [url, setUrl] = useState(mode === "edit" && service ? service.url : "");
+  const [url, setUrl] = useState(mode === 'edit' && service ? service.url : '');
   const [loading, setLoading] = useState(false);
-  const [nameError, setNameError] = useState("");
-  const [urlError, setUrlError] = useState("");
+  const [nameError, setNameError] = useState('');
+  const [urlError, setUrlError] = useState('');
 
   async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
-    setNameError("");
-    setUrlError("");
+    setNameError('');
+    setUrlError('');
 
     const trimmedName = name.trim();
     const trimmedUrl = url.trim();
 
-    if (!trimmedName) { setNameError("Name is required"); return; }
-    if (trimmedName.length > 100) { setNameError("Name must be 100 characters or fewer"); return; }
+    if (!trimmedName) {
+      setNameError('Name is required');
+      return;
+    }
+    if (trimmedName.length > 100) {
+      setNameError('Name must be 100 characters or fewer');
+      return;
+    }
 
-    if (!trimmedUrl) { setUrlError("URL is required"); return; }
-    try { new URL(trimmedUrl); } catch { setUrlError("Must be a valid URL"); return; }
+    if (!trimmedUrl) {
+      setUrlError('URL is required');
+      return;
+    }
+    try {
+      new URL(trimmedUrl);
+    } catch {
+      setUrlError('Must be a valid URL');
+      return;
+    }
     if (
-      !trimmedUrl.startsWith("http://") &&
-      !trimmedUrl.startsWith("https://") &&
-      !trimmedUrl.startsWith("mock://")
+      !trimmedUrl.startsWith('http://') &&
+      !trimmedUrl.startsWith('https://') &&
+      !trimmedUrl.startsWith('mock://')
     ) {
-      setUrlError("URL must start with http://, https://, or mock://");
+      setUrlError('URL must start with http://, https://, or mock://');
       return;
     }
 
     setLoading(true);
     try {
-      if (mode === "add") {
-        const res = await fetch("/api/services", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+      if (mode === 'add') {
+        const res = await fetch('/api/services', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name: trimmedName, url: trimmedUrl }),
         });
         if (!res.ok) {
           const err = await res.json();
-          setUrlError(err.error ?? "Failed to add service");
+          setUrlError(err.error ?? 'Failed to add service');
           return;
         }
-        toast.success("Service added — running initial health check…");
+        toast.success('Service added — running initial health check…');
       } else {
         const res = await fetch(`/api/services/${service!.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name: trimmedName, url: trimmedUrl }),
         });
         if (!res.ok) {
           const err = await res.json();
-          setUrlError(err.error ?? "Failed to update service");
+          setUrlError(err.error ?? 'Failed to update service');
           return;
         }
-        toast.success("Service updated");
+        toast.success('Service updated');
       }
       onSuccess();
       onOpenChange(false);
@@ -174,7 +189,7 @@ function DialogForm({
         </Button>
         <Button type="submit" disabled={loading}>
           {loading && <Spinner className="mr-2 size-4" />}
-          {mode === "add" ? "Add Service" : "Save Changes"}
+          {mode === 'add' ? 'Add Service' : 'Save Changes'}
         </Button>
       </div>
     </form>

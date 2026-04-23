@@ -8,7 +8,9 @@ import { Service } from '@/types';
 export const VIEW_KEY = 'dashboard-view';
 const VIEW_VALUES = Object.values(DASHBOARD_VIEW) as readonly DashboardView[];
 
-export function isView(value: string | null | undefined): value is DashboardView {
+export function isView(
+  value: string | null | undefined,
+): value is DashboardView {
   return !!value && (VIEW_VALUES as readonly string[]).includes(value);
 }
 

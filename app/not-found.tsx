@@ -1,7 +1,7 @@
-import Link from "next/link";
-import { FileQuestionMarkIcon } from "lucide-react";
+import { FileQuestionMarkIcon } from 'lucide-react';
+import Link from 'next/link';
 
-import { buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from '@/components/ui/button';
 import {
   Empty,
   EmptyContent,
@@ -9,8 +9,8 @@ import {
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from "@/components/ui/empty";
-import { cn } from "@/lib/utils";
+} from '@/components/ui/empty';
+import { cn } from '@/lib/utils';
 
 export default function NotFound() {
   return (

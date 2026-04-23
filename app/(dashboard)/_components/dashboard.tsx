@@ -4,10 +4,14 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useState, useSyncExternalStore } from 'react';
 
 import {
-  DASHBOARD_SORT_OPTION,
   DASHBOARD_SERVICE_STATUS,
+  DASHBOARD_SORT_OPTION,
   type DashboardSortOption,
 } from '@/app/(dashboard)/_constants/dashboard';
+import {
+  GET_SERVICES_QUERY_KEY,
+  useGetServices,
+} from '@/app/(dashboard)/_hooks/get-services';
 import {
   getViewServerSnapshot,
   getViewSnapshot,
@@ -15,10 +19,6 @@ import {
   setView,
   subscribeViewStore,
 } from '@/app/(dashboard)/_libs/dashboard-client-store';
-import {
-  GET_SERVICES_QUERY_KEY,
-  useGetServices,
-} from '@/app/(dashboard)/_hooks/get-services';
 import { Service, ServiceStatus } from '@/types';
 
 import { DashboardHeading } from './dashboard-heading';
@@ -47,9 +47,7 @@ export function Dashboard({ initialServices }: { initialServices: Service[] }) {
     DASHBOARD_SERVICE_STATUS.DOWN,
   ]);
 
-  const {
-    data: services = initialServices,
-  } = useGetServices(initialServices);
+  const { data: services = initialServices } = useGetServices(initialServices);
 
   function handleViewChange(values: string[]) {
     const v = values[0];

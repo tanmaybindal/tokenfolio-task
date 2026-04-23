@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
-import Script from 'next/script';
 import { ThemeProvider } from 'next-themes';
 import { Geist, Geist_Mono, Inter } from 'next/font/google';
+import Script from 'next/script';
 
 import { Providers } from '@/components/providers';
 import { ThemeToggle } from '@/components/theme-toggle';

@@ -5,6 +5,7 @@ import { useState } from 'react';
 
 import { useDeleteServices } from '@/app/(dashboard)/_hooks/delete-services';
 import { useRefreshService } from '@/app/(dashboard)/_hooks/refresh-services';
+import { formatLatencyParts } from '@/app/(dashboard)/_libs/format-latency-parts';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,12 +27,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Spinner } from '@/components/ui/spinner';
-import { formatLatencyParts } from '@/app/(dashboard)/_libs/format-latency-parts';
 import { cn } from '@/lib/utils';
 import { ServiceResponse } from '@/types';
 
-import { ServiceDialog } from './service-dialog';
 import { HealthHistoryLine } from './health-history-line';
+import { ServiceDialog } from './service-dialog';
 
 const STATUS_BADGE: Record<string, string> = {
   UP: 'bg-green-50 text-green-700 border-green-200 dark:bg-green-950/40 dark:text-green-400 dark:border-green-800',

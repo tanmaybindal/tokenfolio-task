@@ -1,10 +1,10 @@
-import { readServices, writeServices } from "./storage";
 import {
   checkHealth,
   computeHealthScore,
   STATUS_WEIGHT,
-} from "./health-checker";
-import { applySeedsIfEmpty } from "./seeds";
+} from './health-checker';
+import { applySeedsIfEmpty } from './seeds';
+import { readServices, writeServices } from './storage';
 
 let started = false;
 

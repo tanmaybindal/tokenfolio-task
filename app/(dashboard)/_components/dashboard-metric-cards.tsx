@@ -14,9 +14,15 @@ interface DashboardMetricCardsProps {
 
 export function DashboardMetricCards({ services }: DashboardMetricCardsProps) {
   const total = services.length;
-  const up = services.filter((s) => s.status === DASHBOARD_SERVICE_STATUS.UP).length;
-  const slow = services.filter((s) => s.status === DASHBOARD_SERVICE_STATUS.SLOW).length;
-  const down = services.filter((s) => s.status === DASHBOARD_SERVICE_STATUS.DOWN).length;
+  const up = services.filter(
+    (s) => s.status === DASHBOARD_SERVICE_STATUS.UP,
+  ).length;
+  const slow = services.filter(
+    (s) => s.status === DASHBOARD_SERVICE_STATUS.SLOW,
+  ).length;
+  const down = services.filter(
+    (s) => s.status === DASHBOARD_SERVICE_STATUS.DOWN,
+  ).length;
 
   const metrics = [
     {
@@ -46,7 +52,9 @@ export function DashboardMetricCards({ services }: DashboardMetricCardsProps) {
       {metrics.map(({ label, value, icon }) => (
         <div key={label} className="min-h-28 rounded-lg border bg-card p-5">
           <div className="flex items-center justify-between">
-            <p className="text-base font-medium text-muted-foreground">{label}</p>
+            <p className="text-base font-medium text-muted-foreground">
+              {label}
+            </p>
             {icon}
           </div>
           <p className="mt-3 text-4xl font-semibold">{value}</p>

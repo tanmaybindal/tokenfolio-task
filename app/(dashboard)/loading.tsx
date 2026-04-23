@@ -1,5 +1,5 @@
-import { CardSkeletonGrid } from "@/components/skeletons/card-skeleton";
-import { Skeleton } from "@/components/ui/skeleton";
+import { CardSkeletonGrid } from '@/components/skeletons/card-skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function Loading() {
   return (

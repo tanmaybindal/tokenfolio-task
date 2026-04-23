@@ -22,7 +22,10 @@ export interface HealthHistoryBarsProps {
 }
 
 /** Last health checks as a fixed-width bar strip (10 slots, padded with placeholders). */
-export function HealthHistoryBars({ history, className }: HealthHistoryBarsProps) {
+export function HealthHistoryBars({
+  history,
+  className,
+}: HealthHistoryBarsProps) {
   if (history.length === 0) {
     return (
       <div

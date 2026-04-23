@@ -19,9 +19,7 @@ interface ServiceTablePaginationProps {
   table: TanStackTable<ServiceResponse>;
 }
 
-export function ServiceTablePagination({
-  table,
-}: ServiceTablePaginationProps) {
+export function ServiceTablePagination({ table }: ServiceTablePaginationProps) {
   'use no memo'; // table ref is stable; pagination state is internal (React Compiler)
   const totalRows = table.getCoreRowModel().rows.length;
   const { pageIndex, pageSize } = table.getState().pagination;
@@ -64,11 +62,7 @@ export function ServiceTablePagination({
           <SelectContent align="end" alignItemWithTrigger={false}>
             <SelectGroup>
               {PAGE_SIZES.map((size) => (
-                <SelectItem
-                  key={size}
-                  value={size}
-                  className="cursor-pointer"
-                >
+                <SelectItem key={size} value={size} className="cursor-pointer">
                   {size}
                 </SelectItem>
               ))}

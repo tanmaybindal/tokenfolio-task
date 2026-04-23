@@ -18,14 +18,10 @@ export function BulkActionBar({
   onClear,
   onRefresh,
 }: BulkActionBarProps) {
-  const {
-    mutateAsync: deleteServices,
-    isPending: isDeleting,
-  } = useDeleteServices();
-  const {
-    mutateAsync: refreshServices,
-    isPending: isRefreshing,
-  } = useRefreshServices();
+  const { mutateAsync: deleteServices, isPending: isDeleting } =
+    useDeleteServices();
+  const { mutateAsync: refreshServices, isPending: isRefreshing } =
+    useRefreshServices();
 
   if (selectedIds.length === 0) return null;
 

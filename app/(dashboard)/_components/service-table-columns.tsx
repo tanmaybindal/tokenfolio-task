@@ -1,15 +1,10 @@
-import '@/app/(dashboard)/_types/tanstack-table-meta';
-
 import { ColumnDef } from '@tanstack/react-table';
 import { formatDistanceToNow } from 'date-fns';
-import {
-  ArrowDownIcon,
-  ArrowUpDownIcon,
-  ArrowUpIcon,
-} from 'lucide-react';
+import { ArrowDownIcon, ArrowUpDownIcon, ArrowUpIcon } from 'lucide-react';
 
-import { Checkbox } from '@/components/ui/checkbox';
 import { formatLatencyLabel } from '@/app/(dashboard)/_libs/format-latency-label';
+import '@/app/(dashboard)/_types/tanstack-table-meta';
+import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import { ServiceResponse } from '@/types';
 
@@ -50,8 +45,7 @@ export const serviceTableColumns: ColumnDef<ServiceResponse>[] = [
       <Checkbox
         checked={table.getIsAllPageRowsSelected()}
         indeterminate={
-          table.getIsSomePageRowsSelected() &&
-          !table.getIsAllPageRowsSelected()
+          table.getIsSomePageRowsSelected() && !table.getIsAllPageRowsSelected()
         }
         onCheckedChange={(v) => table.toggleAllPageRowsSelected(!!v)}
         aria-label="Select all"
@@ -150,7 +144,10 @@ export const serviceTableColumns: ColumnDef<ServiceResponse>[] = [
     ),
     cell: ({ row }) => (
       <div className="w-32">
-        <HealthHistoryBars history={row.original.history ?? []} className="h-9" />
+        <HealthHistoryBars
+          history={row.original.history ?? []}
+          className="h-9"
+        />
       </div>
     ),
     enableSorting: false,

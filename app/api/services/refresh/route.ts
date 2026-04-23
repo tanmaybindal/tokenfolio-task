@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 
 import {
-  STATUS_WEIGHT,
   checkHealth,
   computeHealthScore,
+  STATUS_WEIGHT,
 } from '@/lib/health-checker';
 import { readServices, writeServices } from '@/lib/storage';
 
@@ -36,7 +36,10 @@ export async function POST(req: Request) {
 
       const result = await checkHealth(service.url);
       const weight = STATUS_WEIGHT[result.status];
-      const { history, healthScore } = computeHealthScore(service.history, weight);
+      const { history, healthScore } = computeHealthScore(
+        service.history,
+        weight,
+      );
 
       return {
         ...service,

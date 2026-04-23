@@ -1,5 +1,6 @@
-import { ActivityIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ActivityIcon } from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
 import {
   Empty,
   EmptyContent,
@@ -7,7 +8,7 @@ import {
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from "@/components/ui/empty";
+} from '@/components/ui/empty';
 
 interface EmptyServicesProps {
   onAdd: () => void;

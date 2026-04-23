@@ -22,9 +22,7 @@ export function useDeleteServices() {
     onSuccess: async (_data, serviceIds) => {
       const isSingle = serviceIds.length === 1;
       toast.success(
-        isSingle
-          ? 'Service removed'
-          : `Deleted ${serviceIds.length} services`,
+        isSingle ? 'Service removed' : `Deleted ${serviceIds.length} services`,
       );
       await queryClient.invalidateQueries({ queryKey: GET_SERVICES_QUERY_KEY });
     },

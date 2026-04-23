@@ -1,8 +1,4 @@
-import {
-  queryOptions,
-  useQuery,
-  type QueryKey,
-} from '@tanstack/react-query';
+import { type QueryKey, queryOptions, useQuery } from '@tanstack/react-query';
 
 import { DASHBOARD_REFETCH_INTERVAL_MS } from '@/app/(dashboard)/_constants/dashboard';
 import { fetchServices } from '@/app/(dashboard)/_libs/dashboard-client-store';

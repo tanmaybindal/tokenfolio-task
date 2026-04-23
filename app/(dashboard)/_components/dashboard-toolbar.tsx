@@ -85,7 +85,9 @@ export function DashboardToolbar({
                 size="lg"
                 variant="outline"
                 className="cursor-pointer max-lg:px-2.5"
-                aria-label={view === DASHBOARD_VIEW.CARD ? 'Filter and sort' : 'Filter'}
+                aria-label={
+                  view === DASHBOARD_VIEW.CARD ? 'Filter and sort' : 'Filter'
+                }
               />
             }
           >
