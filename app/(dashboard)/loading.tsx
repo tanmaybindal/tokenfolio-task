@@ -1,4 +1,4 @@
-import { CardSkeletonGrid } from '@/components/skeletons/card-skeleton';
+import { CardSkeletonGrid } from '@/app/(dashboard)/_components/card-skeleton';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function Loading() {

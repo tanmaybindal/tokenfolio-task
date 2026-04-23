@@ -8,7 +8,7 @@ import {
 } from '@/app/(dashboard)/_constants/dashboard';
 import { Service, ServiceStatus } from '@/types';
 
-import { TableSkeleton } from '../../../components/skeletons/table-skeleton';
+import { TableSkeleton } from './table-skeleton';
 
 import { DashboardCardsSection } from './dashboard-cards-section';
 import { EmptyServices } from './empty-services';
