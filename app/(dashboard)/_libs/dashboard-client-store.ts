@@ -3,7 +3,6 @@ import {
   DASHBOARD_VIEW,
   type DashboardView,
 } from '@/app/(dashboard)/_constants/dashboard';
-import { Service } from '@/types';
 
 export const VIEW_KEY = 'dashboard-view';
 const VIEW_VALUES = Object.values(DASHBOARD_VIEW) as readonly DashboardView[];
@@ -33,10 +32,4 @@ export function setView(value: DashboardView) {
   window.dispatchEvent(
     new StorageEvent('storage', { key: VIEW_KEY, newValue: value }),
   );
-}
-
-export async function fetchServices(): Promise<Service[]> {
-  const res = await fetch('/api/services');
-  if (!res.ok) throw new Error('Failed to fetch services');
-  return res.json();
 }
