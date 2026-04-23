@@ -74,11 +74,28 @@ export function Dashboard({ initialServices }: { initialServices: Service[] }) {
     });
   }
 
+  function handleMetricFilterChange(filter: ServiceStatus | 'ALL') {
+    setStatusFilters(
+      filter === 'ALL'
+        ? [
+            DASHBOARD_SERVICE_STATUS.UP,
+            DASHBOARD_SERVICE_STATUS.SLOW,
+            DASHBOARD_SERVICE_STATUS.DOWN,
+          ]
+        : [filter],
+    );
+    setCardPageIndex(0);
+  }
+
   return (
     <main className="container mx-auto max-w-7xl px-4 py-8 sm:px-8 lg:px-16">
       <DashboardHeading />
 
-      <DashboardMetricCards services={services} />
+      <DashboardMetricCards
+        services={services}
+        statusFilters={statusFilters}
+        onMetricFilterChange={handleMetricFilterChange}
+      />
 
       <DashboardToolbar
         search={search}
