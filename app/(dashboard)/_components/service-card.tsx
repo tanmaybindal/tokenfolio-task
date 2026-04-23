@@ -4,7 +4,7 @@ import { MoreHorizontalIcon } from 'lucide-react';
 import { useState } from 'react';
 
 import { useDeleteServices } from '@/app/(dashboard)/_hooks/delete-services';
-import { useRefreshService } from '@/app/(dashboard)/_hooks/refresh-services';
+import { useRefreshServices } from '@/app/(dashboard)/_hooks/refresh-services';
 import { formatLatencyParts } from '@/app/(dashboard)/_libs/format-latency-parts';
 import {
   AlertDialog,
@@ -68,14 +68,14 @@ interface ServiceCardProps {
 
 export function ServiceCard({ service, onRefresh }: ServiceCardProps) {
   const { mutateAsync: refreshService, isPending: refreshing } =
-    useRefreshService();
+    useRefreshServices();
   const { mutateAsync: deleteServices, isPending: deleting } =
     useDeleteServices();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
 
   async function handleRefresh() {
-    await refreshService(service.id);
+    await refreshService([service.id]);
     onRefresh();
   }
 

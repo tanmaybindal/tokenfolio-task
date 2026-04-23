@@ -30,12 +30,3 @@ export function useRefreshServices() {
     },
   });
 }
-
-export function useRefreshService() {
-  const { mutateAsync, ...rest } = useRefreshServices();
-
-  return {
-    ...rest,
-    mutateAsync: (serviceId: string) => mutateAsync([serviceId]),
-  };
-}
