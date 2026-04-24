@@ -48,6 +48,5 @@ skills-lock.json
 /.serena
 CLAUDE.md
 
-# Runtime storage
-/data/services.json
-/data/*.tmp
+# Runtime storage (created at startup; not needed in repo — resolveDataDir creates it)
+/data/
