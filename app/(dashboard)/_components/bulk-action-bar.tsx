@@ -1,12 +1,13 @@
 'use client';
 
+import { useIsFetching } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 import {
   deleteServiceDialogHandle,
 } from '@/app/(dashboard)/_components/service-dialog-handles';
 import {
-  useGetServices,
+  GET_SERVICES_QUERY_KEY,
   useRefreshServices,
 } from '@/app/(dashboard)/_hooks/get-services';
 import { AlertDialogTrigger } from '@/components/ui/alert-dialog';
@@ -27,7 +28,7 @@ export function BulkActionBar({
     mutateAsync: refreshServices,
     isPending: isBulkRefreshing,
   } = useRefreshServices();
-  const { isFetching: isRefreshing } = useGetServices();
+  const isRefreshing = useIsFetching({ queryKey: GET_SERVICES_QUERY_KEY }) > 0;
   const selectedIds = selectedServices.map((service) => service.id);
 
   if (selectedIds.length === 0) return null;
