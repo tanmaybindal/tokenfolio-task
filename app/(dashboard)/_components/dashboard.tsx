@@ -20,20 +20,20 @@ import {
 
 export function Dashboard() {
   const isRestoring = useIsRestoring();
-  const { data: services = [] } = useGetServices();
+  const { data: services, isLoading } = useGetServices();
 
-  if (isRestoring) return <DashboardLoading />;
+  if (isRestoring || isLoading) return <DashboardLoading />;
 
   return (
     <DashboardStateProvider>
       <main className="container mx-auto max-w-7xl px-4 py-8 sm:px-8 lg:px-16">
         <DashboardHeading />
 
-        <DashboardMetricCards services={services} />
+        <DashboardMetricCards services={services ?? []} />
 
         <DashboardToolbar />
 
-        <DashboardMainContent services={services} />
+        <DashboardMainContent services={services ?? []} />
 
         <ServiceDialog mode="add" handle={addServiceDialogHandle} />
         <ServiceDialog mode="edit" handle={editServiceDialogHandle} />
