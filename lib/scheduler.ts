@@ -13,14 +13,14 @@ export function startScheduler(): void {
   if (started) return;
   started = true;
 
-  applySeedsIfEmpty();
+  void applySeedsIfEmpty();
   void runChecks(); // initial check on startup without blocking
 
   setInterval(() => void runChecks(), 30_000);
 }
 
 async function runChecks(): Promise<void> {
-  const data = readServices();
+  const data = await readServices();
   if (data.services.length === 0) return;
 
   const updated = await Promise.all(
@@ -42,5 +42,5 @@ async function runChecks(): Promise<void> {
     }),
   );
 
-  writeServices({ services: updated });
+  await writeServices({ services: updated });
 }

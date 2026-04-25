@@ -19,7 +19,7 @@ export async function POST(req: Request) {
     payload = {};
   }
 
-  const data = readServices();
+  const data = await readServices();
   if (data.services.length === 0) {
     return NextResponse.json([]);
   }
@@ -52,7 +52,7 @@ export async function POST(req: Request) {
     }),
   );
 
-  writeServices({ services: updatedServices });
+  await writeServices({ services: updatedServices });
 
   if (!shouldRefreshSubset) {
     return NextResponse.json(updatedServices);

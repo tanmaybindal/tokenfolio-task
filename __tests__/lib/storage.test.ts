@@ -1,15 +1,14 @@
-import fs from 'fs';
-import os from 'os';
-import path from 'path';
-import { afterAll, beforeEach, expect, test } from 'vitest';
+import { beforeEach, expect, test, vi } from 'vitest';
 
 import type { ServicesData } from '@/types';
 
-// Create a unique temp dir for this test run and point storage at it
-const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'storage-test-'));
-process.env.DATA_DIR = tmpDir;
+const mockGet = vi.fn();
+const mockSet = vi.fn();
 
-// Import storage AFTER setting DATA_DIR so the module picks up the env var
+vi.mock('@upstash/redis', () => ({
+  Redis: { fromEnv: vi.fn(() => ({ get: mockGet, set: mockSet })) },
+}));
+
 const { readServices, writeServices } = await import('@/lib/storage');
 
 const sample: ServicesData = {
@@ -28,31 +27,23 @@ const sample: ServicesData = {
   ],
 };
 
-function dataFile() {
-  return path.join(tmpDir, 'services.json');
-}
-
 beforeEach(() => {
-  if (fs.existsSync(dataFile())) fs.unlinkSync(dataFile());
+  mockGet.mockReset();
+  mockSet.mockReset();
 });
 
-afterAll(() => {
-  // Clean up the temp dir
-  fs.rmSync(tmpDir, { recursive: true, force: true });
-  delete process.env.DATA_DIR;
+test('readServices returns empty services when Redis has no data', async () => {
+  mockGet.mockResolvedValue(null);
+  expect(await readServices()).toEqual({ services: [] });
 });
 
-test('readServices returns empty services when file does not exist', () => {
-  expect(readServices()).toEqual({ services: [] });
+test('readServices returns stored data from Redis', async () => {
+  mockGet.mockResolvedValue(sample);
+  expect(await readServices()).toEqual(sample);
 });
 
-test('writeServices then readServices roundtrips data correctly', () => {
-  writeServices(sample);
-  expect(readServices()).toEqual(sample);
-});
-
-test('writeServices uses atomic rename (no .tmp file left behind)', () => {
-  writeServices(sample);
-  const tmp = path.join(tmpDir, 'services.json.tmp');
-  expect(fs.existsSync(tmp)).toBe(false);
+test('writeServices calls redis.set with the correct key and data', async () => {
+  mockSet.mockResolvedValue('OK');
+  await writeServices(sample);
+  expect(mockSet).toHaveBeenCalledWith('services', sample);
 });

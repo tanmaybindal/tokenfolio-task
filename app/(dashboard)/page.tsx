@@ -7,7 +7,7 @@ import { readServices } from '@/lib/storage';
 
 export default async function Page() {
   const queryClient = makeQueryClient();
-  const { services } = readServices();
+  const { services } = await readServices();
 
   await queryClient.prefetchQuery(getServicesQueryOptions(services));
 

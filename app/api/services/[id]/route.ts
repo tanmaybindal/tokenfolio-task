@@ -47,7 +47,7 @@ export async function PATCH(
     );
   }
 
-  const data = readServices();
+  const data = await readServices();
   const index = data.services.findIndex((s) => s.id === id);
 
   if (index === -1) {
@@ -65,7 +65,7 @@ export async function PATCH(
     healthScore: null,
     history: [],
   };
-  writeServices(data);
+  await writeServices(data);
 
   return NextResponse.json(data.services[index]);
 }
@@ -75,7 +75,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
-  const data = readServices();
+  const data = await readServices();
   const exists = data.services.some((s) => s.id === id);
 
   if (!exists) {
@@ -83,7 +83,7 @@ export async function DELETE(
   }
 
   data.services = data.services.filter((s) => s.id !== id);
-  writeServices(data);
+  await writeServices(data);
 
   return new NextResponse(null, { status: 204 });
 }

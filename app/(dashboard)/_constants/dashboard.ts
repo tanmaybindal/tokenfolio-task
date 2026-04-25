@@ -14,7 +14,7 @@ export const DASHBOARD_SERVICE_STATUS = {
   DOWN: 'DOWN',
 } as const;
 
-export const DASHBOARD_REFETCH_INTERVAL_MS = 30_000;
+export const DASHBOARD_REFETCH_INTERVAL_MS = 60_000;
 
 export const DASHBOARD_SORT_OPTION = {
   NAME_ASC: 'name-asc',

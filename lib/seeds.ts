@@ -11,11 +11,11 @@ interface SeedEntry {
   url: string;
 }
 
-export function applySeedsIfEmpty(): void {
+export async function applySeedsIfEmpty(): Promise<void> {
   // SEED_ON_STARTUP=false disables seeding entirely (e.g. for clean-slate demos)
   if (process.env.SEED_ON_STARTUP === 'false') return;
 
-  const data = readServices();
+  const data = await readServices();
   if (data.services.length > 0) return;
 
   const seedsPath = path.join(process.cwd(), 'config', 'seeds.json');
@@ -36,5 +36,5 @@ export function applySeedsIfEmpty(): void {
     history: [],
   }));
 
-  writeServices({ services });
+  await writeServices({ services });
 }

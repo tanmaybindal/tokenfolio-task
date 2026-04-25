@@ -15,7 +15,7 @@ interface DeleteServicesPayload {
 }
 
 export async function GET() {
-  const { services } = readServices();
+  const { services } = await readServices();
   // Return full Service objects; history[] is needed by the dashboard for spark-lines
   return NextResponse.json(services);
 }
@@ -60,7 +60,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const data = readServices();
+  const data = await readServices();
 
   const newService: Service = {
     id: crypto.randomBytes(4).toString('hex'),
@@ -75,7 +75,7 @@ export async function POST(req: Request) {
   };
 
   data.services.push(newService);
-  writeServices(data);
+  await writeServices(data);
 
   // Fire initial health check after the response is sent (after() is the Next.js
   // idiomatic API for non-blocking post-response work — avoids detached promises)
@@ -83,7 +83,7 @@ export async function POST(req: Request) {
     const result = await checkHealth(url);
     const weight = STATUS_WEIGHT[result.status];
     const { history, healthScore } = computeHealthScore([], weight);
-    const fresh = readServices();
+    const fresh = await readServices();
     fresh.services = fresh.services.map((s) =>
       s.id === newService.id
         ? {
@@ -96,7 +96,7 @@ export async function POST(req: Request) {
           }
         : s,
     );
-    writeServices(fresh);
+    await writeServices(fresh);
   });
 
   return NextResponse.json(newService, { status: 201 });
@@ -110,7 +110,7 @@ export async function DELETE(req: Request) {
     payload = {};
   }
 
-  const data = readServices();
+  const data = await readServices();
   const allServices = data.services;
 
   const hasServiceIds =
@@ -133,7 +133,7 @@ export async function DELETE(req: Request) {
   }
 
   data.services = allServices.filter((s) => !targetIds.has(s.id));
-  writeServices(data);
+  await writeServices(data);
 
   return NextResponse.json({ deleted: existingTargetCount });
 }
