@@ -19,37 +19,35 @@ SEED_ON_STARTUP=false pnpm dev
 
 ## Features
 
-- **Real-time health monitoring** — services checked every 30 seconds by a background scheduler
-- **Status classification** — UP / SLOW / DOWN based on latency thresholds
+- **Real-time health monitoring** — services are re-checked every 30 seconds via TanStack Query polling
+- **Status classification** — UP / SLOW / DOWN / RATE_LIMITED based on response and latency thresholds
 - **Health score** — rolling average of last 10 checks (UP=100%, SLOW=50%, DOWN=0%)
-- **Card and table views** — toggle between layouts, preference saved in localStorage
+- **Card and table views** — toggle between layouts, preference/state synced in URL query params (`nuqs`)
 - **Sortable table** — click any column header to sort; Status uses a meaningful sort order (UP → SLOW → DOWN)
 - **Spark-line trends** — coloured bar chart of last 10 checks per service
 - **Bulk actions** — select multiple rows to refresh or delete at once
+- **Duplicate URL guard** — add/edit validation prevents monitoring the same endpoint twice
+- **Human-friendly error UX** — cards and table display readable error states (e.g. Forbidden, Rate limited) instead of raw technical noise
 - **Light/dark mode** — system default, toggle-able
 - **Configurable seeding** — pre-load services from `config/seeds.json`
 
 ## Architecture & Key Decisions
 
-### Why server-side health checks?
+### Why client-side polling?
 
-Health checks run in a Node.js scheduler, not the browser. This avoids CORS restrictions on non-public URLs and enables persistent JSON file storage. The browser only reads — it never performs HTTP checks directly.
+For this implementation, checks run in the dashboard client via TanStack Query polling (`refetchInterval`), with manual refresh available for ad-hoc checks. This keeps iteration simple and makes state transitions very visible during development.
 
-### Why JSON file instead of SQLite or Postgres?
+### Why in-memory query state?
 
-The data model is a flat list of services with their latest check result. There are no relational queries, no joins, no need for transactions. JSON with atomic writes is appropriate for this scale — a good engineer picks the right tool, not the most impressive one.
+The runtime state is maintained in TanStack Query cache for this dashboard flow (seeded from `config/seeds.json` when empty). This avoids backend complexity while still supporting sorting, filtering, pagination, and bulk actions cleanly in the UI.
 
-**Atomic write pattern:** We write to a `.tmp` file then `fs.renameSync` to the real path. This prevents corrupt JSON if the process dies mid-write.
+### Why user-friendly status mapping?
 
-### Why a background scheduler instead of on-demand checks?
-
-A monitoring dashboard should keep data current even when no one is looking. The scheduler runs every 30s via `setInterval` started in `instrumentation.ts` (Next.js's official server startup hook). The client polls the read API every 30s — it never triggers checks.
-
-Manual refresh triggers an immediate out-of-cycle check without affecting the scheduler's interval.
+Raw HTTP/status details can be noisy for end users. The UI keeps core statuses compact while surfacing readable context for failures (for example, Forbidden or Rate limited) in card/table displays.
 
 ### Why TanStack Query instead of router.refresh()?
 
-TanStack Query gives us `refetchInterval`, `isFetching`, `dataUpdatedAt`, and `refetchOnWindowFocus` for free. The countdown timer is derived from `dataUpdatedAt` — accurate to the real last fetch, not a cosmetic timer. `HydrationBoundary` prefetches on the server so the dashboard is never blank on load.
+TanStack Query gives us `refetchInterval`, `isFetching`, mutation states, and cache orchestration out of the box. The refresh countdown is derived from real query timing (`dataUpdatedAt`), and components can coordinate loading/fetching without manual global state wiring.
 
 ### Health score formula
 
@@ -64,16 +62,16 @@ A service always UP scores 100. Always DOWN scores 0. Always SLOW scores 50. A s
 ## Scale Trade-offs
 
 **"What if you had 500 services?"**
-The JSON file becomes a write bottleneck — the scheduler checking 500 services in parallel would need locking or a queue. The fix: move to SQLite or Postgres, replace `setInterval` with BullMQ for parallel checks with concurrency limits.
+Client-side checking would become a bottleneck (browser/network constraints, noisy UI updates, and limited control over retries/concurrency). The fix would be moving checks to a server-side worker with queue-based concurrency control.
 
 **"What would production look like?"**
-Authentication, a real database, alerting (webhooks/Slack when DOWN), the scheduler as a separate worker process (so it survives Next.js restarts), and an audit log of status changes.
+Authentication, a durable database, alerting (webhooks/Slack when DOWN), server-side health-check workers, and an audit log of status changes.
 
 **"What's the biggest weakness?"**
-The scheduler is in-process with the Next.js server. If the server restarts, health checks pause. In production, the checker would be a standalone worker.
+Checks currently run from the client context, which is not ideal for always-on monitoring. In production, checks should run in dedicated backend workers.
 
 **"How does this scale for users?"**
-This is an internal tool — user scale is bounded. The meaningful scale axis is number of services, not concurrent users. Bottlenecks are the scheduler and the JSON file, not HTTP throughput.
+This is an internal tool — user scale is bounded. The key scale axis is number of monitored services, and production scaling should prioritize backend check infrastructure over client-side polling.
 
 ## Configuration
 
