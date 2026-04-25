@@ -13,9 +13,9 @@ import { useEffect, useState } from 'react';
 
 import { ServiceResponse } from '@/types';
 
-import { ServiceTableHeader } from './service-table-header';
 import { serviceTableColumns } from './service-table-columns';
 import { ServiceTableData } from './service-table-data';
+import { ServiceTableHeader } from './service-table-header';
 import { ServiceTablePagination } from './service-table-pagination';
 
 interface ServiceTableProps {
@@ -36,6 +36,7 @@ export function ServiceTable({ services }: ServiceTableProps) {
   const table = useReactTable({
     data: services,
     columns: serviceTableColumns,
+    getRowId: (row) => row.id,
     autoResetPageIndex: false,
     state: {
       sorting,
@@ -64,7 +65,9 @@ export function ServiceTable({ services }: ServiceTableProps) {
     }
   }, [tablePageIndex, services.length, setPaginationState, table]);
 
-  const selectedServices = table.getSelectedRowModel().rows.map((r) => r.original);
+  const selectedServices = table
+    .getSelectedRowModel()
+    .rows.map((r) => r.original);
 
   return (
     <div className="flex flex-col gap-3">

@@ -27,6 +27,13 @@ import { Service, ServiceResponse } from '@/types';
 
 type Mode = 'add' | 'edit';
 
+function normalizeUrlForCompare(rawUrl: string): string {
+  const parsed = new URL(rawUrl.trim());
+  parsed.hash = '';
+  parsed.hostname = parsed.hostname.toLowerCase();
+  return parsed.toString();
+}
+
 interface ServiceDialogProps {
   handle: DialogPrimitive.Root.Props['handle'];
   mode: Mode;
@@ -151,6 +158,24 @@ function DialogForm({
       !trimmedUrl.startsWith('mock://')
     ) {
       setUrlError('URL must start with http://, https://, or mock://');
+      return;
+    }
+
+    const currentServices =
+      queryClient.getQueryData<Service[]>(GET_SERVICES_QUERY_KEY) ?? [];
+    const normalizedInputUrl = normalizeUrlForCompare(trimmedUrl);
+    const duplicateExists = currentServices.some((existing) => {
+      if (mode === 'edit' && existing.id === service?.id) return false;
+
+      try {
+        return normalizeUrlForCompare(existing.url) === normalizedInputUrl;
+      } catch {
+        return existing.url.trim() === trimmedUrl;
+      }
+    });
+
+    if (duplicateExists) {
+      setUrlError('This URL is already being monitored');
       return;
     }
 
