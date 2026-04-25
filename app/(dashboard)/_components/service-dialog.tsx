@@ -1,8 +1,10 @@
 'use client';
 
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
+import { GET_SERVICES_QUERY_KEY } from '@/app/(dashboard)/_hooks/get-services';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -19,7 +21,7 @@ import {
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
-import { ServiceResponse } from '@/types';
+import { Service, ServiceResponse } from '@/types';
 
 type Mode = 'add' | 'edit';
 
@@ -60,6 +62,32 @@ function DialogForm({
   onSuccess,
   onOpenChange,
 }: ServiceDialogProps) {
+  const queryClient = useQueryClient();
+  const createServiceMutation = useMutation({
+    mutationFn: async (newService: Service) => {
+      const current =
+        queryClient.getQueryData<Service[]>(GET_SERVICES_QUERY_KEY) ?? [];
+      return [...current, newService];
+    },
+    onSuccess: (updatedServices) => {
+      queryClient.setQueryData<Service[]>(GET_SERVICES_QUERY_KEY, updatedServices);
+      void queryClient.invalidateQueries({ queryKey: GET_SERVICES_QUERY_KEY });
+    },
+  });
+  const updateServiceMutation = useMutation({
+    mutationFn: async (payload: { id: string; name: string; url: string }) => {
+      const current =
+        queryClient.getQueryData<Service[]>(GET_SERVICES_QUERY_KEY) ?? [];
+      return current.map((existing) =>
+        existing.id === payload.id
+          ? { ...existing, name: payload.name, url: payload.url }
+          : existing,
+      );
+    },
+    onSuccess: (updatedServices) => {
+      queryClient.setQueryData<Service[]>(GET_SERVICES_QUERY_KEY, updatedServices);
+    },
+  });
   const [name, setName] = useState(
     mode === 'edit' && service ? service.name : '',
   );
@@ -107,28 +135,26 @@ function DialogForm({
     setLoading(true);
     try {
       if (mode === 'add') {
-        const res = await fetch('/api/services', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: trimmedName, url: trimmedUrl }),
-        });
-        if (!res.ok) {
-          const err = await res.json();
-          setUrlError(err.error ?? 'Failed to add service');
-          return;
-        }
+        const newService: Service = {
+          id: crypto.randomUUID().slice(0, 8),
+          name: trimmedName,
+          url: trimmedUrl,
+          createdAt: new Date().toISOString(),
+          status: 'PENDING',
+          latencyMs: null,
+          lastCheckedAt: null,
+          healthScore: null,
+          history: [],
+          rateLimitedUntil: null,
+        };
+        await createServiceMutation.mutateAsync(newService);
         toast.success('Service added — running initial health check…');
       } else {
-        const res = await fetch(`/api/services/${service!.id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: trimmedName, url: trimmedUrl }),
+        await updateServiceMutation.mutateAsync({
+          id: service!.id,
+          name: trimmedName,
+          url: trimmedUrl,
         });
-        if (!res.ok) {
-          const err = await res.json();
-          setUrlError(err.error ?? 'Failed to update service');
-          return;
-        }
         toast.success('Service updated');
       }
       onSuccess();

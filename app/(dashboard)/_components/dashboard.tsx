@@ -1,25 +1,30 @@
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
-import { useState, useSyncExternalStore } from 'react';
+import { useIsRestoring, useQueryClient } from '@tanstack/react-query';
+import {
+  parseAsIndex,
+  parseAsInteger,
+  parseAsString,
+  useQueryState,
+  useQueryStates,
+} from 'nuqs';
+import { useMemo, useState } from 'react';
 
 import {
+  DASHBOARD_DEFAULT_VIEW,
   DASHBOARD_SERVICE_STATUS,
   DASHBOARD_SORT_OPTION,
+  DASHBOARD_VIEW,
   type DashboardSortOption,
+  type DashboardView,
 } from '@/app/(dashboard)/_constants/dashboard';
 import {
   GET_SERVICES_QUERY_KEY,
   useGetServices,
 } from '@/app/(dashboard)/_hooks/get-services';
-import {
-  getViewServerSnapshot,
-  getViewSnapshot,
-  isView,
-  setView,
-  subscribeViewStore,
-} from '@/app/(dashboard)/_libs/dashboard-client-store';
-import { Service, ServiceStatus } from '@/types';
+import { SERVICE_STATUSES, ServiceStatus } from '@/types';
+
+import DashboardLoading from '@/app/(dashboard)/loading';
 
 import { DashboardHeading } from './dashboard-heading';
 import { DashboardMainContent } from './dashboard-main-content';
@@ -27,32 +32,59 @@ import { DashboardMetricCards } from './dashboard-metric-cards';
 import { DashboardToolbar } from './dashboard-toolbar';
 import { ServiceDialog } from './service-dialog';
 
-export function Dashboard({ initialServices }: { initialServices: Service[] }) {
+const defaultStatusFilters: ServiceStatus[] = [
+  DASHBOARD_SERVICE_STATUS.UP,
+  DASHBOARD_SERVICE_STATUS.SLOW,
+  DASHBOARD_SERVICE_STATUS.DOWN,
+  DASHBOARD_SERVICE_STATUS.RATE_LIMITED,
+  DASHBOARD_SERVICE_STATUS.PENDING,
+];
+
+export function Dashboard() {
+  const isRestoring = useIsRestoring();
   const queryClient = useQueryClient();
-  const view = useSyncExternalStore(
-    subscribeViewStore,
-    getViewSnapshot,
-    getViewServerSnapshot,
+  const [view, setViewParam] = useQueryState(
+    'view',
+    parseAsString.withDefault(DASHBOARD_DEFAULT_VIEW),
   );
+  const dashboardView: DashboardView =
+    view === DASHBOARD_VIEW.CARD || view === DASHBOARD_VIEW.TABLE
+      ? (view as DashboardView)
+      : DASHBOARD_DEFAULT_VIEW;
   const [addOpen, setAddOpen] = useState(false);
-  const [search, setSearch] = useState('');
-  const [cardPageIndex, setCardPageIndex] = useState(0);
-  const [cardPageSize, setCardPageSize] = useState(16);
+  const [search, setSearch] = useQueryState(
+    'search',
+    parseAsString.withDefault(''),
+  );
+  const [statusFilterParam, setStatusFilterParam] = useQueryState(
+    'status',
+    parseAsString.withDefault(defaultStatusFilters.join(',')),
+  );
+  const [{ cardPageIndex, cardPageSize }, setCardPaginationState] =
+    useQueryStates({
+      cardPageIndex: parseAsIndex.withDefault(0),
+      cardPageSize: parseAsInteger.withDefault(16),
+    });
   const [sortOption, setSortOption] = useState<DashboardSortOption>(
     DASHBOARD_SORT_OPTION.NAME_ASC,
   );
-  const [statusFilters, setStatusFilters] = useState<ServiceStatus[]>([
-    DASHBOARD_SERVICE_STATUS.UP,
-    DASHBOARD_SERVICE_STATUS.SLOW,
-    DASHBOARD_SERVICE_STATUS.DOWN,
-  ]);
+  const statusFilters = useMemo(() => {
+    const parsed = statusFilterParam
+      .split(',')
+      .map((value) => value.trim().toUpperCase())
+      .filter((value): value is ServiceStatus =>
+        SERVICE_STATUSES.includes(value as ServiceStatus),
+      );
+    return parsed.length > 0 ? parsed : defaultStatusFilters;
+  }, [statusFilterParam]);
 
-  const { data: services = initialServices } = useGetServices(initialServices);
+  const { data: services = [] } = useGetServices();
 
   function handleViewChange(values: string[]) {
     const v = values[0];
-    if (isView(v)) {
-      setView(v);
+    if (v === DASHBOARD_VIEW.CARD || v === DASHBOARD_VIEW.TABLE) {
+      void setViewParam(v as DashboardView);
+      void setCardPaginationState({ cardPageIndex: 0 });
     }
   }
   function invalidate() {
@@ -61,31 +93,27 @@ export function Dashboard({ initialServices }: { initialServices: Service[] }) {
 
   function handleSortOptionChange(sort: DashboardSortOption) {
     setSortOption(sort);
-    setCardPageIndex(0);
+    void setCardPaginationState({ cardPageIndex: 0 });
   }
 
   function handleStatusToggle(status: ServiceStatus) {
-    setStatusFilters((prev) => {
-      const next = prev.includes(status)
-        ? prev.filter((s) => s !== status)
-        : [...prev, status];
-      setCardPageIndex(0);
-      return next;
-    });
+    const next = statusFilters.includes(status)
+      ? statusFilters.filter((s) => s !== status)
+      : [...statusFilters, status];
+    void setCardPaginationState({ cardPageIndex: 0 });
+    void setStatusFilterParam(
+      (next.length > 0 ? next : defaultStatusFilters).join(','),
+    );
   }
 
   function handleMetricFilterChange(filter: ServiceStatus | 'ALL') {
-    setStatusFilters(
-      filter === 'ALL'
-        ? [
-            DASHBOARD_SERVICE_STATUS.UP,
-            DASHBOARD_SERVICE_STATUS.SLOW,
-            DASHBOARD_SERVICE_STATUS.DOWN,
-          ]
-        : [filter],
+    void setStatusFilterParam(
+      (filter === 'ALL' ? defaultStatusFilters : [filter]).join(','),
     );
-    setCardPageIndex(0);
+    void setCardPaginationState({ cardPageIndex: 0 });
   }
+
+  if (isRestoring) return <DashboardLoading />;
 
   return (
     <main className="container mx-auto max-w-7xl px-4 py-8 sm:px-8 lg:px-16">
@@ -101,9 +129,9 @@ export function Dashboard({ initialServices }: { initialServices: Service[] }) {
         search={search}
         onSearchChange={(value) => {
           setSearch(value);
-          setCardPageIndex(0);
+          void setCardPaginationState({ cardPageIndex: 0 });
         }}
-        view={view}
+        view={dashboardView}
         sortOption={sortOption}
         statusFilters={statusFilters}
         onSortOptionChange={handleSortOptionChange}
@@ -115,17 +143,25 @@ export function Dashboard({ initialServices }: { initialServices: Service[] }) {
       <DashboardMainContent
         services={services}
         search={search}
-        view={view}
+        view={dashboardView}
         sortOption={sortOption}
         statusFilters={statusFilters}
         cardPageSize={cardPageSize}
         cardPageIndex={cardPageIndex}
-        onPageIndexChange={setCardPageIndex}
-        onPageSizeChange={(size) => {
-          setCardPageSize(size);
-          setCardPageIndex(0);
+        onPageIndexChange={(updater) => {
+          const next =
+            typeof updater === 'function' ? updater(cardPageIndex) : updater;
+          void setCardPaginationState({ cardPageIndex: Math.max(0, next) });
         }}
-        onPageSelect={setCardPageIndex}
+        onPageSizeChange={(size) => {
+          void setCardPaginationState({
+            cardPageSize: size,
+            cardPageIndex: 0,
+          });
+        }}
+        onPageSelect={(page) => {
+          void setCardPaginationState({ cardPageIndex: page });
+        }}
         onRefresh={invalidate}
         onAddService={() => setAddOpen(true)}
       />

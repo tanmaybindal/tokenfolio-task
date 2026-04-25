@@ -3,49 +3,39 @@
 import { toast } from 'sonner';
 
 import { useDeleteServices } from '@/app/(dashboard)/_hooks/delete-services';
-import { useRefreshServices } from '@/app/(dashboard)/_hooks/refresh-services';
+import {
+  useGetServices,
+  useRefreshServices,
+} from '@/app/(dashboard)/_hooks/get-services';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 
 interface BulkActionBarProps {
   selectedIds: string[];
   onClear: () => void;
-  onRefresh: () => void;
 }
 
-export function BulkActionBar({
-  selectedIds,
-  onClear,
-  onRefresh,
-}: BulkActionBarProps) {
-  const { mutateAsync: deleteServices, isPending: isDeleting } =
-    useDeleteServices();
-  const { mutateAsync: refreshServices, isPending: isRefreshing } =
-    useRefreshServices();
+export function BulkActionBar({ selectedIds, onClear }: BulkActionBarProps) {
+  const { mutate: deleteServices } = useDeleteServices();
+  const {
+    mutateAsync: refreshServices,
+    isPending: isBulkRefreshing,
+  } = useRefreshServices();
+  const { isFetching: isRefreshing } = useGetServices();
 
   if (selectedIds.length === 0) return null;
 
   async function handleBulkRefresh() {
-    try {
-      await refreshServices(selectedIds);
-      toast.success(
-        `Refreshed ${selectedIds.length} service${selectedIds.length > 1 ? 's' : ''}`,
-      );
-      onRefresh();
-      onClear();
-    } catch {
-      toast.error('Failed to refresh selected services');
-    }
+    await refreshServices(selectedIds);
+    toast.success(
+      `Refreshed ${selectedIds.length} service${selectedIds.length > 1 ? 's' : ''}`,
+    );
+    onClear();
   }
 
-  async function handleBulkDelete() {
-    try {
-      await deleteServices(selectedIds);
-      onRefresh();
-      onClear();
-    } catch {
-      // Error toast is handled in the mutation hook.
-    }
+  function handleBulkDelete() {
+    deleteServices(selectedIds);
+    onClear();
   }
 
   return (
@@ -58,20 +48,21 @@ export function BulkActionBar({
           variant="outline"
           size="sm"
           onClick={handleBulkRefresh}
-          disabled={isRefreshing || isDeleting}
+          disabled={isRefreshing || isBulkRefreshing}
           className="cursor-pointer"
         >
-          {isRefreshing && <Spinner className="mr-2 size-4" />}
+          {(isRefreshing || isBulkRefreshing) && (
+            <Spinner className="mr-2 size-4" />
+          )}
           Refresh Selected
         </Button>
         <Button
           variant="destructive"
           size="sm"
           onClick={handleBulkDelete}
-          disabled={isDeleting || isRefreshing}
+          disabled={isRefreshing}
           className="cursor-pointer"
         >
-          {isDeleting && <Spinner className="mr-2 size-4" />}
           Delete Selected
         </Button>
         <Button

@@ -1,33 +1,28 @@
+'use client';
+
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
-import { GET_SERVICES_QUERY_KEY } from './get-services';
+import { Service } from '@/types';
 
-async function deleteServicesRequest(serviceIds: string[]) {
-  const res = await fetch('/api/services', {
-    method: 'DELETE',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ serviceIds }),
-  });
-  if (!res.ok) {
-    throw new Error('Failed to delete selected services');
-  }
-}
+import { GET_SERVICES_QUERY_KEY } from './get-services';
 
 export function useDeleteServices() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: deleteServicesRequest,
-    onSuccess: async (_data, serviceIds) => {
-      const isSingle = serviceIds.length === 1;
-      toast.success(
-        isSingle ? 'Service removed' : `Deleted ${serviceIds.length} services`,
-      );
-      await queryClient.invalidateQueries({ queryKey: GET_SERVICES_QUERY_KEY });
+    mutationFn: async (serviceIds: string[]) => {
+      const current =
+        queryClient.getQueryData<Service[]>(GET_SERVICES_QUERY_KEY) ?? [];
+      return current.filter((service) => !serviceIds.includes(service.id));
     },
-    onError: () => {
-      toast.error('Failed to delete selected services');
+    onSuccess: (updatedServices, serviceIds) => {
+      queryClient.setQueryData<Service[]>(GET_SERVICES_QUERY_KEY, updatedServices);
+      toast.success(
+        serviceIds.length === 1
+          ? 'Service removed'
+          : `Deleted ${serviceIds.length} services`,
+      );
     },
   });
 }

@@ -12,6 +12,8 @@ export const DASHBOARD_SERVICE_STATUS = {
   UP: 'UP',
   SLOW: 'SLOW',
   DOWN: 'DOWN',
+  RATE_LIMITED: 'RATE_LIMITED',
+  PENDING: 'PENDING',
 } as const;
 
 export const DASHBOARD_REFETCH_INTERVAL_MS = 30_000;

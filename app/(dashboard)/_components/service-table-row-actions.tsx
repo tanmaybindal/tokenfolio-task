@@ -2,7 +2,7 @@
 
 import { MoreHorizontalIcon } from 'lucide-react';
 
-import { useRefreshServices } from '@/app/(dashboard)/_hooks/refresh-services';
+import { useRefreshServices } from '@/app/(dashboard)/_hooks/get-services';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -16,17 +16,15 @@ import { ServiceResponse } from '@/types';
 
 export function ServiceTableRowActions({
   service,
-  onRefresh,
   onRename,
   onDelete,
 }: {
   service: ServiceResponse;
-  onRefresh: () => void;
   onRename: () => void;
   onDelete: () => void;
 }) {
   'use no memo';
-  const { mutateAsync: refreshService, isPending: refreshing } =
+  const { mutateAsync: refreshServices, isPending: refreshing } =
     useRefreshServices();
 
   return (
@@ -48,8 +46,7 @@ export function ServiceTableRowActions({
             className="cursor-pointer"
             disabled={refreshing}
             onClick={async () => {
-              await refreshService([service.id]);
-              onRefresh();
+              await refreshServices([service.id]);
             }}
           >
             Refresh

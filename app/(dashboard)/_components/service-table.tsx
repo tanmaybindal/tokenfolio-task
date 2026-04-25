@@ -4,12 +4,12 @@ import {
   getCoreRowModel,
   getPaginationRowModel,
   getSortedRowModel,
-  PaginationState,
   RowSelectionState,
   SortingState,
   useReactTable,
 } from '@tanstack/react-table';
-import { useMemo, useState } from 'react';
+import { parseAsIndex, parseAsInteger, useQueryStates } from 'nuqs';
+import { useEffect, useMemo, useState } from 'react';
 
 import { ServiceResponse } from '@/types';
 
@@ -28,10 +28,11 @@ interface ServiceTableProps {
 export function ServiceTable({ services, onRefresh }: ServiceTableProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
-  const [pagination, setPagination] = useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: 10,
-  });
+  const [{ tablePageIndex, tablePageSize }, setPaginationState] =
+    useQueryStates({
+      tablePageIndex: parseAsIndex.withDefault(0),
+      tablePageSize: parseAsInteger.withDefault(10),
+    });
   const [deleteTarget, setDeleteTarget] = useState<ServiceResponse | null>(
     null,
   );
@@ -52,14 +53,33 @@ export function ServiceTable({ services, onRefresh }: ServiceTableProps) {
     data: services,
     columns: serviceTableColumns,
     meta: tableMeta,
-    state: { sorting, rowSelection, pagination },
+    autoResetPageIndex: false,
+    state: {
+      sorting,
+      rowSelection,
+      pagination: { pageIndex: tablePageIndex, pageSize: tablePageSize },
+    },
     onSortingChange: setSorting,
     onRowSelectionChange: setRowSelection,
-    onPaginationChange: setPagination,
+    onPaginationChange: (updater) => {
+      const current = { pageIndex: tablePageIndex, pageSize: tablePageSize };
+      const next = typeof updater === 'function' ? updater(current) : updater;
+      void setPaginationState({
+        tablePageIndex: next.pageIndex,
+        tablePageSize: next.pageSize,
+      });
+    },
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
   });
+
+  useEffect(() => {
+    const maxPageIndex = Math.max(0, table.getPageCount() - 1);
+    if (tablePageIndex > maxPageIndex) {
+      void setPaginationState({ tablePageIndex: maxPageIndex });
+    }
+  }, [tablePageIndex, services.length, setPaginationState, table]);
 
   const selectedIds = table
     .getSelectedRowModel()
@@ -72,7 +92,6 @@ export function ServiceTable({ services, onRefresh }: ServiceTableProps) {
           title="Monitored APIs"
           selectedIds={selectedIds}
           onClearSelection={() => setRowSelection({})}
-          onRefresh={onRefresh}
         />
 
         <ServiceTableData table={table} />

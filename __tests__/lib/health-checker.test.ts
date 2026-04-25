@@ -78,6 +78,19 @@ describe('checkHealth', () => {
     expect(result.status).toBe('DOWN');
   });
 
+  test('returns RATE_LIMITED for 429 response', async () => {
+    vi.mocked(global.fetch).mockResolvedValueOnce({
+      ok: false,
+      status: 429,
+      headers: {
+        get: (name: string) => (name === 'retry-after' ? '60' : null),
+      },
+    } as unknown as Response);
+    const result = await checkHealth('https://example.com');
+    expect(result.status).toBe('RATE_LIMITED');
+    expect(result.retryAfterMs).toBe(60_000);
+  });
+
   test('returns DOWN for network failure', async () => {
     vi.mocked(global.fetch).mockRejectedValueOnce(new Error('ECONNREFUSED'));
     const result = await checkHealth('https://example.com');

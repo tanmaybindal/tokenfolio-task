@@ -83,7 +83,7 @@ export function ServiceTablePagination({ table }: ServiceTablePaginationProps) {
             variant={pageIndex === page ? 'default' : 'outline'}
             size="sm"
             onClick={() => table.setPageIndex(page)}
-            className="w-8"
+            className="w-8 cursor-pointer"
           >
             {page + 1}
           </Button>
@@ -91,6 +91,7 @@ export function ServiceTablePagination({ table }: ServiceTablePaginationProps) {
         <Button
           variant="outline"
           size="sm"
+          className="cursor-pointer"
           onClick={() => table.nextPage()}
           disabled={!table.getCanNextPage()}
         >

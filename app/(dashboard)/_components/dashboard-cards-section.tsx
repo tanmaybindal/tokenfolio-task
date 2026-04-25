@@ -14,7 +14,6 @@ export interface DashboardCardsSectionProps {
   onPageIndexChange: (updater: (prev: number) => number) => void;
   onPageSizeChange: (size: number) => void;
   onPageSelect: (page: number) => void;
-  onRefresh: () => void;
 }
 
 export function DashboardCardsSection({
@@ -27,12 +26,11 @@ export function DashboardCardsSection({
   onPageIndexChange,
   onPageSizeChange,
   onPageSelect,
-  onRefresh,
 }: DashboardCardsSectionProps) {
   return (
     <>
       <div className="block sm:hidden">
-        <DashboardCardsGrid services={services} onRefresh={onRefresh} />
+        <DashboardCardsGrid services={services} />
 
         {services.length > 0 && (
           <CardsPaginationMobile
@@ -48,7 +46,7 @@ export function DashboardCardsSection({
       </div>
 
       <div className="hidden sm:block">
-        <DashboardCardsGrid services={services} onRefresh={onRefresh} />
+        <DashboardCardsGrid services={services} />
 
         {services.length > 0 && (
           <CardsPaginationDesktop

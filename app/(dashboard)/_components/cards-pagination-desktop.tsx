@@ -97,14 +97,10 @@ export function CardsPaginationDesktop({
           {Array.from({ length: cardTotalPages }, (_, i) => (
             <Button
               key={i}
-              variant="outline"
+              variant={cardPageIndex === i ? 'default' : 'outline'}
               size="icon"
               onClick={() => onPageSelect(i)}
-              className={`size-8 cursor-pointer ${
-                cardPageIndex === i
-                  ? 'border-transparent bg-primary text-primary-foreground hover:bg-primary/90'
-                  : ''
-              }`}
+              className="size-8 cursor-pointer"
               aria-label={`Go to page ${i + 1}`}
               aria-current={cardPageIndex === i ? 'page' : undefined}
             >

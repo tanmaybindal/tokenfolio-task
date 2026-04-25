@@ -1,21 +1,14 @@
 import type { Metadata } from 'next';
-import { ThemeProvider } from 'next-themes';
-import { Geist, Geist_Mono, Inter } from 'next/font/google';
+import { Geist_Mono, Inter } from 'next/font/google';
 import Script from 'next/script';
 
 import { Providers } from '@/components/providers';
 import { ThemeToggle } from '@/components/theme-toggle';
-import { Toaster } from '@/components/ui/sonner';
 import { cn } from '@/lib/utils';
 
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
-
-const geistSans = Geist({
-  variable: '--font-geist-sans',
-  subsets: ['latin'],
-});
 
 const geistMono = Geist_Mono({
   variable: '--font-geist-mono',
@@ -40,7 +33,6 @@ export default function RootLayout({
       className={cn(
         'h-full',
         'antialiased',
-        geistSans.variable,
         geistMono.variable,
         'font-sans',
         inter.variable,
@@ -55,20 +47,17 @@ export default function RootLayout({
             strategy="beforeInteractive"
           />
         )}
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <Providers>
-            <nav className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
-              <div className="container mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-8 lg:px-16">
-                <span className="text-base font-semibold tracking-tight">
-                  Pulse API
-                </span>
-                <ThemeToggle />
-              </div>
-            </nav>
-            {children}
-          </Providers>
-          <Toaster richColors position="bottom-right" />
-        </ThemeProvider>
+        <Providers>
+          <nav className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
+            <div className="container mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-8 lg:px-16">
+              <span className="text-base font-semibold tracking-tight">
+                Pulse API
+              </span>
+              <ThemeToggle />
+            </div>
+          </nav>
+          {children}
+        </Providers>
       </body>
     </html>
   );

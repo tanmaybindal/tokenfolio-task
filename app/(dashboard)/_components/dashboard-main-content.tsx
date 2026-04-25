@@ -8,10 +8,9 @@ import {
 } from '@/app/(dashboard)/_constants/dashboard';
 import { Service, ServiceStatus } from '@/types';
 
-import { TableSkeleton } from './table-skeleton';
-
 import { DashboardCardsSection } from './dashboard-cards-section';
 import { EmptyServices } from './empty-services';
+import { TableSkeleton } from './table-skeleton';
 
 const ServiceTable = dynamic(
   () => import('./service-table').then((m) => m.ServiceTable),
@@ -102,7 +101,6 @@ export function DashboardMainContent({
       onPageIndexChange={onPageIndexChange}
       onPageSizeChange={onPageSizeChange}
       onPageSelect={onPageSelect}
-      onRefresh={onRefresh}
     />
   );
 

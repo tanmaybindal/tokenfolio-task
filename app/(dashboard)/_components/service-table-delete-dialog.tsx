@@ -1,5 +1,4 @@
-import { toast } from 'sonner';
-
+import { useDeleteServices } from '@/app/(dashboard)/_hooks/delete-services';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,6 +22,8 @@ export function ServiceTableDeleteDialog({
   onOpenChange,
   onDeleted,
 }: ServiceTableDeleteDialogProps) {
+  const { mutateAsync: deleteServices, isPending: deleting } = useDeleteServices();
+
   return (
     <AlertDialog open={!!target} onOpenChange={onOpenChange}>
       <AlertDialogContent>
@@ -39,13 +40,11 @@ export function ServiceTableDeleteDialog({
             className="bg-destructive text-white hover:bg-destructive/90"
             onClick={async () => {
               if (!target) return;
-              await fetch(`/api/services/${target.id}`, {
-                method: 'DELETE',
-              });
-              toast.success(`${target.name} removed`);
+              await deleteServices([target.id]);
               onOpenChange(false);
               onDeleted();
             }}
+            disabled={deleting}
           >
             Delete
           </AlertDialogAction>

@@ -165,6 +165,26 @@ export function DashboardToolbar({
               >
                 Down
               </DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem
+                checked={statusFilters.includes(
+                  DASHBOARD_SERVICE_STATUS.RATE_LIMITED,
+                )}
+                onCheckedChange={() =>
+                  onStatusToggle(DASHBOARD_SERVICE_STATUS.RATE_LIMITED)
+                }
+                className="cursor-pointer"
+              >
+                Rate limited
+              </DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem
+                checked={statusFilters.includes(DASHBOARD_SERVICE_STATUS.PENDING)}
+                onCheckedChange={() =>
+                  onStatusToggle(DASHBOARD_SERVICE_STATUS.PENDING)
+                }
+                className="cursor-pointer"
+              >
+                Pending
+              </DropdownMenuCheckboxItem>
             </DropdownMenuGroup>
           </DropdownMenuContent>
         </DropdownMenu>

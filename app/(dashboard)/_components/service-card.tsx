@@ -4,7 +4,7 @@ import { MoreHorizontalIcon } from 'lucide-react';
 import { useState } from 'react';
 
 import { useDeleteServices } from '@/app/(dashboard)/_hooks/delete-services';
-import { useRefreshServices } from '@/app/(dashboard)/_hooks/refresh-services';
+import { useRefreshServices } from '@/app/(dashboard)/_hooks/get-services';
 import { formatLatencyParts } from '@/app/(dashboard)/_libs/format-latency-parts';
 import {
   AlertDialog,
@@ -31,12 +31,18 @@ import { cn } from '@/lib/utils';
 import { ServiceResponse } from '@/types';
 
 import { HealthHistoryLine } from './health-history-line';
+import {
+  formatStatusLabel,
+  RateLimitCountdown,
+} from './rate-limit-countdown';
 import { ServiceDialog } from './service-dialog';
 
 const STATUS_BADGE: Record<string, string> = {
   UP: 'bg-green-50 text-green-700 border-green-200 dark:bg-green-950/40 dark:text-green-400 dark:border-green-800',
   SLOW: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800',
   DOWN: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-400 dark:border-red-800',
+  RATE_LIMITED:
+    'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/40 dark:text-orange-400 dark:border-orange-800',
   PENDING: 'bg-muted text-muted-foreground border-border',
 };
 
@@ -44,6 +50,7 @@ const STATUS_DOT: Record<string, string> = {
   UP: 'bg-green-500',
   SLOW: 'bg-amber-500',
   DOWN: 'bg-red-500',
+  RATE_LIMITED: 'bg-orange-500',
   PENDING: 'bg-muted-foreground',
 };
 
@@ -51,6 +58,7 @@ const STATUS_RING: Record<string, string> = {
   UP: 'ring-green-200 dark:ring-green-900',
   SLOW: 'ring-amber-200 dark:ring-amber-900',
   DOWN: 'ring-red-200 dark:ring-red-900',
+  RATE_LIMITED: 'ring-orange-200 dark:ring-orange-900',
   PENDING: '',
 };
 
@@ -58,30 +66,30 @@ const LATENCY_COLOR: Record<string, string> = {
   UP: 'text-foreground',
   SLOW: 'text-amber-500',
   DOWN: 'text-destructive',
+  RATE_LIMITED: 'text-orange-600 dark:text-orange-400',
   PENDING: 'text-muted-foreground',
 };
 
 interface ServiceCardProps {
   service: ServiceResponse;
-  onRefresh: () => void;
 }
 
-export function ServiceCard({ service, onRefresh }: ServiceCardProps) {
-  const { mutateAsync: refreshService, isPending: refreshing } =
+export function ServiceCard({ service }: ServiceCardProps) {
+  const { mutateAsync: refreshServices, isPending: refreshing } =
     useRefreshServices();
-  const { mutateAsync: deleteServices, isPending: deleting } =
-    useDeleteServices();
+  const { mutate: deleteServices } = useDeleteServices();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
 
-  async function handleRefresh() {
-    await refreshService([service.id]);
-    onRefresh();
+  function handleRefresh() {
+    void (async () => {
+      await refreshServices([service.id]);
+    })();
   }
 
-  async function handleDelete() {
-    await deleteServices([service.id]);
-    onRefresh();
+  function handleDelete() {
+    deleteServices([service.id]);
+    setDeleteOpen(false);
   }
 
   const score = service.healthScore;
@@ -92,7 +100,10 @@ export function ServiceCard({ service, onRefresh }: ServiceCardProps) {
         ? 'text-amber-500'
         : 'text-destructive';
 
-  const isDown = service.status === 'DOWN' || service.latencyMs == null;
+  const isDown =
+    service.status === 'DOWN' ||
+    service.status === 'RATE_LIMITED' ||
+    service.latencyMs == null;
   const latencyParts =
     !isDown && service.latencyMs != null
       ? formatLatencyParts(service.latencyMs)
@@ -126,7 +137,7 @@ export function ServiceCard({ service, onRefresh }: ServiceCardProps) {
                   STATUS_DOT[service.status],
                 )}
               />
-              {service.status}
+              {formatStatusLabel(service.status)}
             </span>
           </div>
         </CardHeader>
@@ -136,7 +147,17 @@ export function ServiceCard({ service, onRefresh }: ServiceCardProps) {
           <p className="mb-1 text-xs text-muted-foreground">Latency</p>
           <div className="flex items-center justify-between">
             {isDown ? (
-              <span className="text-2xl font-bold text-destructive">ERR</span>
+              <div className="flex flex-col">
+                <span className="text-2xl font-bold text-destructive">
+                  {service.status === 'RATE_LIMITED' ? '429' : 'ERR'}
+                </span>
+                {service.status === 'RATE_LIMITED' && (
+                  <RateLimitCountdown
+                    rateLimitedUntil={service.rateLimitedUntil}
+                    className="text-xs text-muted-foreground"
+                  />
+                )}
+              </div>
             ) : latencyParts ? (
               <div className="flex items-baseline gap-1">
                 <span
@@ -181,7 +202,7 @@ export function ServiceCard({ service, onRefresh }: ServiceCardProps) {
                   <DropdownMenuGroup>
                     <DropdownMenuItem
                       onClick={handleRefresh}
-                      disabled={refreshing || deleting}
+                      disabled={refreshing}
                       className="cursor-pointer"
                     >
                       {refreshing && <Spinner className="mr-2 size-4" />}
@@ -198,7 +219,7 @@ export function ServiceCard({ service, onRefresh }: ServiceCardProps) {
                   <DropdownMenuGroup>
                     <DropdownMenuItem
                       className="cursor-pointer text-destructive focus:text-destructive"
-                      disabled={refreshing || deleting}
+                      disabled={refreshing}
                       onClick={() => setDeleteOpen(true)}
                     >
                       Delete
@@ -225,18 +246,10 @@ export function ServiceCard({ service, onRefresh }: ServiceCardProps) {
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
-              disabled={deleting}
               onClick={handleDelete}
-              className="cursor-pointer bg-destructive text-white hover:bg-destructive/90 disabled:cursor-not-allowed disabled:opacity-50"
+              className="cursor-pointer bg-destructive text-white hover:bg-destructive/90"
             >
-              {deleting ? (
-                <>
-                  <Spinner className="mr-2 size-4" />
-                  Deleting
-                </>
-              ) : (
-                'Delete'
-              )}
+              Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -247,7 +260,7 @@ export function ServiceCard({ service, onRefresh }: ServiceCardProps) {
         onOpenChange={setRenameOpen}
         mode="edit"
         service={service}
-        onSuccess={onRefresh}
+        onSuccess={() => {}}
       />
     </>
   );
