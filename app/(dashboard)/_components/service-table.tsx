@@ -9,23 +9,22 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import { parseAsIndex, parseAsInteger, useQueryStates } from 'nuqs';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { ServiceResponse } from '@/types';
 
-import { ServiceDialog } from './service-dialog';
-import { ServiceTableCardHeader } from './service-table-card-header';
+import { ServiceTableHeader } from './service-table-header';
 import { serviceTableColumns } from './service-table-columns';
 import { ServiceTableData } from './service-table-data';
-import { ServiceTableDeleteDialog } from './service-table-delete-dialog';
 import { ServiceTablePagination } from './service-table-pagination';
 
 interface ServiceTableProps {
   services: ServiceResponse[];
-  onRefresh: () => void;
 }
 
-export function ServiceTable({ services, onRefresh }: ServiceTableProps) {
+export function ServiceTable({ services }: ServiceTableProps) {
+  'use no memo';
+
   const [sorting, setSorting] = useState<SortingState>([]);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [{ tablePageIndex, tablePageSize }, setPaginationState] =
@@ -33,26 +32,10 @@ export function ServiceTable({ services, onRefresh }: ServiceTableProps) {
       tablePageIndex: parseAsIndex.withDefault(0),
       tablePageSize: parseAsInteger.withDefault(10),
     });
-  const [deleteTarget, setDeleteTarget] = useState<ServiceResponse | null>(
-    null,
-  );
-  const [renameTarget, setRenameTarget] = useState<ServiceResponse | null>(
-    null,
-  );
-
-  const tableMeta = useMemo(
-    () => ({
-      onRefresh,
-      onRename: setRenameTarget,
-      onDelete: setDeleteTarget,
-    }),
-    [onRefresh],
-  );
 
   const table = useReactTable({
     data: services,
     columns: serviceTableColumns,
-    meta: tableMeta,
     autoResetPageIndex: false,
     state: {
       sorting,
@@ -81,16 +64,14 @@ export function ServiceTable({ services, onRefresh }: ServiceTableProps) {
     }
   }, [tablePageIndex, services.length, setPaginationState, table]);
 
-  const selectedIds = table
-    .getSelectedRowModel()
-    .rows.map((r) => r.original.id);
+  const selectedServices = table.getSelectedRowModel().rows.map((r) => r.original);
 
   return (
     <div className="flex flex-col gap-3">
       <div className="overflow-hidden rounded-lg border bg-card">
-        <ServiceTableCardHeader
+        <ServiceTableHeader
           title="Monitored APIs"
-          selectedIds={selectedIds}
+          selectedServices={selectedServices}
           onClearSelection={() => setRowSelection({})}
         />
 
@@ -98,24 +79,6 @@ export function ServiceTable({ services, onRefresh }: ServiceTableProps) {
 
         <ServiceTablePagination table={table} />
       </div>
-
-      <ServiceTableDeleteDialog
-        target={deleteTarget}
-        onOpenChange={(open) => {
-          if (!open) setDeleteTarget(null);
-        }}
-        onDeleted={onRefresh}
-      />
-
-      <ServiceDialog
-        open={!!renameTarget}
-        onOpenChange={(open) => {
-          if (!open) setRenameTarget(null);
-        }}
-        mode="edit"
-        service={renameTarget ?? undefined}
-        onSuccess={onRefresh}
-      />
     </div>
   );
 }

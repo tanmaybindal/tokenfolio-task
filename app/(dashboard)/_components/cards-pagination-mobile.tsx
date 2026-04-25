@@ -1,3 +1,5 @@
+'use client';
+
 import { ChevronLeftIcon, ChevronRightIcon, Rows3Icon } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -10,17 +12,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useDashboardStateContext } from './dashboard-state-provider';
 
 const PAGE_SIZES = [8, 16, 32];
 
 interface CardsPaginationMobileProps {
   cardStart: number;
-  cardPageSize: number;
   totalResults: number;
-  cardPageIndex: number;
   cardTotalPages: number;
-  onPageIndexChange: (updater: (prev: number) => number) => void;
-  onPageSizeChange: (size: number) => void;
 }
 
 function CardsSummary({
@@ -42,13 +41,16 @@ function CardsSummary({
 
 export function CardsPaginationMobile({
   cardStart,
-  cardPageSize,
   totalResults,
-  cardPageIndex,
   cardTotalPages,
-  onPageIndexChange,
-  onPageSizeChange,
 }: CardsPaginationMobileProps) {
+  const {
+    cardPageIndex,
+    cardPageSize,
+    handlePageIndexChange,
+    handlePageSizeChange,
+  } = useDashboardStateContext();
+
   return (
     <div className="mt-4 flex flex-col gap-2">
       <CardsSummary
@@ -64,7 +66,7 @@ export function CardsPaginationMobile({
           </ButtonGroupText>
           <Select
             value={cardPageSize}
-            onValueChange={(value) => onPageSizeChange(Number(value))}
+            onValueChange={(value) => handlePageSizeChange(Number(value))}
           >
             <SelectTrigger className="h-8 min-w-14 cursor-pointer px-2.5">
               <SelectValue />
@@ -89,7 +91,7 @@ export function CardsPaginationMobile({
             variant="outline"
             size="icon"
             className="size-8 cursor-pointer"
-            onClick={() => onPageIndexChange((p) => p - 1)}
+            onClick={() => handlePageIndexChange((p) => p - 1)}
             disabled={cardPageIndex === 0}
             aria-label="Go to previous page"
           >
@@ -99,7 +101,7 @@ export function CardsPaginationMobile({
             variant="outline"
             size="icon"
             className="size-8 cursor-pointer"
-            onClick={() => onPageIndexChange((p) => p + 1)}
+            onClick={() => handlePageIndexChange((p) => p + 1)}
             disabled={cardPageIndex >= cardTotalPages - 1}
             aria-label="Go to next page"
           >

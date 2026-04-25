@@ -44,7 +44,11 @@ export function RateLimitCountdown({
   if (now == null) return null;
 
   const remainingMs = new Date(rateLimitedUntil).getTime() - now;
-  if (remainingMs <= 0) return null;
+  if (remainingMs <= 0) {
+    return <span className={className}>Will be checked on the next poll.</span>;
+  }
 
-  return <span className={className}>Retry in {formatRemaining(remainingMs)}</span>;
+  return (
+    <span className={className}>Retry in {formatRemaining(remainingMs)}</span>
+  );
 }

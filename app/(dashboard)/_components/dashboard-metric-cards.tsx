@@ -1,12 +1,12 @@
 'use client';
 
+import { useIsRestoring } from '@tanstack/react-query';
 import {
   AlertTriangleIcon,
   CheckCircle2Icon,
   ServerIcon,
   XCircleIcon,
 } from 'lucide-react';
-import { useIsRestoring } from '@tanstack/react-query';
 
 import { DASHBOARD_SERVICE_STATUS } from '@/app/(dashboard)/_constants/dashboard';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -14,12 +14,12 @@ import { cn } from '@/lib/utils';
 import { Service } from '@/types';
 import { ServiceStatus } from '@/types';
 
+import { useDashboardStateContext } from './dashboard-state-provider';
+
 type MetricCardFilter = ServiceStatus | 'ALL';
 
 interface DashboardMetricCardsProps {
   services: Service[];
-  statusFilters: ServiceStatus[];
-  onMetricFilterChange: (filter: MetricCardFilter) => void;
 }
 
 export function getActiveMetricCard(statusFilters: ServiceStatus[]) {
@@ -34,12 +34,10 @@ export function getActiveMetricCard(statusFilters: ServiceStatus[]) {
   return null;
 }
 
-export function DashboardMetricCards({
-  services,
-  statusFilters,
-  onMetricFilterChange,
-}: DashboardMetricCardsProps) {
+export function DashboardMetricCards({ services }: DashboardMetricCardsProps) {
   const isRestoring = useIsRestoring();
+  const { handleMetricFilterChange, statusFilters } =
+    useDashboardStateContext();
 
   const total = services.length;
   const up = services.filter(
@@ -96,14 +94,17 @@ export function DashboardMetricCards({
 
   if (isRestoring) {
     return (
-      <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-5">
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-5 sm:gap-4">
         {metrics.map(({ label, icon }) => (
-          <div key={label} className="min-h-28 rounded-lg border bg-card p-5">
+          <div
+            key={label}
+            className="min-h-24 rounded-lg border bg-card p-4 sm:min-h-28 sm:p-5"
+          >
             <div className="flex items-center justify-between">
-              <p className="text-base font-medium text-muted-foreground">
+              <p className="text-sm font-medium text-muted-foreground sm:text-base">
                 {label}
               </p>
-              {icon}
+              <span className="shrink-0">{icon}</span>
             </div>
             <Skeleton className="mt-3 h-10 w-12" />
           </div>
@@ -113,25 +114,27 @@ export function DashboardMetricCards({
   }
 
   return (
-    <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-5">
+    <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-5 sm:gap-4">
       {metrics.map(({ label, value, icon, filter }) => (
         <button
           key={label}
           type="button"
-          onClick={() => onMetricFilterChange(filter)}
+          onClick={() => handleMetricFilterChange(filter)}
           className={cn(
-            'min-h-28 cursor-pointer rounded-lg border bg-card p-5 text-left transition-colors hover:border-accent-foreground/25 hover:bg-accent',
+            'min-h-24 cursor-pointer rounded-lg border bg-card p-4 text-left transition-colors hover:border-accent-foreground/25 hover:bg-accent sm:min-h-28 sm:p-5',
             activeMetricCard === filter &&
               'border-accent-foreground/20 bg-accent',
           )}
         >
           <div className="flex items-center justify-between">
-            <p className="text-base font-medium text-muted-foreground">
+            <p className="text-sm font-medium text-muted-foreground sm:text-base">
               {label}
             </p>
-            {icon}
+            <span className="shrink-0">{icon}</span>
           </div>
-          <p className="mt-3 text-4xl font-semibold">{value}</p>
+          <p className="mt-2 text-3xl font-semibold sm:mt-3 sm:text-4xl">
+            {value}
+          </p>
         </button>
       ))}
     </div>

@@ -15,7 +15,7 @@ import {
   STATUS_WEIGHT,
 } from '@/lib/health-checker';
 import { DEFAULT_RATE_LIMIT_COOLDOWN_MS } from '@/lib/rate-limit';
-import { Service } from '@/types';
+import { Service, SERVICE_ERROR_KIND } from '@/types';
 
 export const GET_SERVICES_QUERY_KEY = ['services'] as const satisfies QueryKey;
 
@@ -37,6 +37,8 @@ function createSeedServices(): Service[] {
     healthScore: null,
     history: [],
     rateLimitedUntil: null,
+    lastHttpStatus: null,
+    lastErrorKind: null,
   }));
 }
 
@@ -47,6 +49,8 @@ async function runHealthChecks(services: Service[]): Promise<Service[]> {
         return {
           ...service,
           status: 'RATE_LIMITED' as const,
+          lastHttpStatus: 429,
+          lastErrorKind: SERVICE_ERROR_KIND.HTTP,
         };
       }
 
@@ -63,6 +67,8 @@ async function runHealthChecks(services: Service[]): Promise<Service[]> {
         lastCheckedAt: new Date().toISOString(),
         history,
         healthScore,
+        lastHttpStatus: result.httpStatus ?? null,
+        lastErrorKind: result.errorKind ?? null,
         rateLimitedUntil:
           result.status === 'RATE_LIMITED'
             ? new Date(
@@ -119,6 +125,8 @@ export function useRefreshServices() {
               lastCheckedAt: target.lastCheckedAt,
               history: target.history,
               healthScore: target.healthScore,
+              lastHttpStatus: 429,
+              lastErrorKind: SERVICE_ERROR_KIND.HTTP,
               rateLimitedUntil: target.rateLimitedUntil,
             };
           }
@@ -137,6 +145,8 @@ export function useRefreshServices() {
             lastCheckedAt: new Date().toISOString(),
             history,
             healthScore,
+            lastHttpStatus: result.httpStatus ?? null,
+            lastErrorKind: result.errorKind ?? null,
             rateLimitedUntil:
               result.status === 'RATE_LIMITED'
                 ? new Date(

@@ -2,26 +2,33 @@
 
 import { toast } from 'sonner';
 
-import { useDeleteServices } from '@/app/(dashboard)/_hooks/delete-services';
+import {
+  deleteServiceDialogHandle,
+} from '@/app/(dashboard)/_components/service-dialog-handles';
 import {
   useGetServices,
   useRefreshServices,
 } from '@/app/(dashboard)/_hooks/get-services';
+import { AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
+import { ServiceResponse } from '@/types';
 
 interface BulkActionBarProps {
-  selectedIds: string[];
+  selectedServices: ServiceResponse[];
   onClear: () => void;
 }
 
-export function BulkActionBar({ selectedIds, onClear }: BulkActionBarProps) {
-  const { mutate: deleteServices } = useDeleteServices();
+export function BulkActionBar({
+  selectedServices,
+  onClear,
+}: BulkActionBarProps) {
   const {
     mutateAsync: refreshServices,
     isPending: isBulkRefreshing,
   } = useRefreshServices();
   const { isFetching: isRefreshing } = useGetServices();
+  const selectedIds = selectedServices.map((service) => service.id);
 
   if (selectedIds.length === 0) return null;
 
@@ -30,11 +37,6 @@ export function BulkActionBar({ selectedIds, onClear }: BulkActionBarProps) {
     toast.success(
       `Refreshed ${selectedIds.length} service${selectedIds.length > 1 ? 's' : ''}`,
     );
-    onClear();
-  }
-
-  function handleBulkDelete() {
-    deleteServices(selectedIds);
     onClear();
   }
 
@@ -56,15 +58,20 @@ export function BulkActionBar({ selectedIds, onClear }: BulkActionBarProps) {
           )}
           Refresh Selected
         </Button>
-        <Button
-          variant="destructive"
-          size="sm"
-          onClick={handleBulkDelete}
-          disabled={isRefreshing}
-          className="cursor-pointer"
+        <AlertDialogTrigger
+          handle={deleteServiceDialogHandle}
+          payload={selectedServices}
+          render={
+            <Button
+              variant="destructive"
+              size="sm"
+              disabled={isRefreshing}
+              className="cursor-pointer"
+            />
+          }
         >
           Delete Selected
-        </Button>
+        </AlertDialogTrigger>
         <Button
           variant="ghost"
           size="sm"

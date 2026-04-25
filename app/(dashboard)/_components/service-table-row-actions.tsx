@@ -3,7 +3,13 @@
 import { MoreHorizontalIcon } from 'lucide-react';
 
 import { useRefreshServices } from '@/app/(dashboard)/_hooks/get-services';
+import {
+  deleteServiceDialogHandle,
+  editServiceDialogHandle,
+} from '@/app/(dashboard)/_components/service-dialog-handles';
+import { AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import { DialogTrigger } from '@/components/ui/dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,12 +22,8 @@ import { ServiceResponse } from '@/types';
 
 export function ServiceTableRowActions({
   service,
-  onRename,
-  onDelete,
 }: {
   service: ServiceResponse;
-  onRename: () => void;
-  onDelete: () => void;
 }) {
   'use no memo';
   const { mutateAsync: refreshServices, isPending: refreshing } =
@@ -51,18 +53,27 @@ export function ServiceTableRowActions({
           >
             Refresh
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={onRename} className="cursor-pointer">
+          <DialogTrigger
+            handle={editServiceDialogHandle}
+            nativeButton={false}
+            payload={service}
+            render={<DropdownMenuItem className="cursor-pointer" />}
+          >
             Edit
-          </DropdownMenuItem>
+          </DialogTrigger>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem
-            className="cursor-pointer text-destructive focus:text-destructive"
-            onClick={onDelete}
+          <AlertDialogTrigger
+            handle={deleteServiceDialogHandle}
+            nativeButton={false}
+            payload={service}
+            render={
+              <DropdownMenuItem className="cursor-pointer text-destructive focus:text-destructive" />
+            }
           >
             Delete
-          </DropdownMenuItem>
+          </AlertDialogTrigger>
         </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>

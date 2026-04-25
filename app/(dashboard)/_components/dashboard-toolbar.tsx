@@ -11,7 +11,6 @@ import {
   DASHBOARD_SORT_OPTION,
   DASHBOARD_VIEW,
   type DashboardSortOption,
-  type DashboardView,
 } from '@/app/(dashboard)/_constants/dashboard';
 import { Button } from '@/components/ui/button';
 import {
@@ -31,35 +30,24 @@ import {
   InputGroupInput,
 } from '@/components/ui/input-group';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { ServiceStatus } from '@/types';
 
+import { useDashboardStateContext } from './dashboard-state-provider';
 import { RefreshCountdownButton } from './refresh-countdown-button';
+import { addServiceDialogHandle } from './service-dialog-handles';
+import { DialogTrigger } from '@/components/ui/dialog';
 
-interface DashboardToolbarProps {
-  search: string;
-  onSearchChange: (value: string) => void;
+export function DashboardToolbar() {
+  const {
+    dashboardView,
+    handleSearchChange,
+    handleSortOptionChange,
+    handleStatusToggle,
+    handleViewChange,
+    search,
+    sortOption,
+    statusFilters,
+  } = useDashboardStateContext();
 
-  view: DashboardView;
-  sortOption: DashboardSortOption;
-  statusFilters: ServiceStatus[];
-  onSortOptionChange: (sort: DashboardSortOption) => void;
-  onStatusToggle: (status: ServiceStatus) => void;
-  onViewChange: (values: string[]) => void;
-  onAddService: () => void;
-}
-
-export function DashboardToolbar({
-  search,
-  onSearchChange,
-
-  view,
-  sortOption,
-  statusFilters,
-  onSortOptionChange,
-  onStatusToggle,
-  onViewChange,
-  onAddService,
-}: DashboardToolbarProps) {
   return (
     <div className="mb-4 flex items-center gap-3">
       <InputGroup className="h-9 max-w-xs flex-1">
@@ -70,7 +58,7 @@ export function DashboardToolbar({
           placeholder="Search services..."
           value={search}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-            onSearchChange(e.target.value)
+            handleSearchChange(e.target.value)
           }
           className="h-9"
         />
@@ -86,25 +74,29 @@ export function DashboardToolbar({
                 variant="outline"
                 className="cursor-pointer max-lg:px-2.5"
                 aria-label={
-                  view === DASHBOARD_VIEW.CARD ? 'Filter and sort' : 'Filter'
+                  dashboardView === DASHBOARD_VIEW.CARD
+                    ? 'Filter and sort'
+                    : 'Filter'
                 }
               />
             }
           >
             <FunnelIcon />
             <span className="hidden lg:inline">
-              {view === DASHBOARD_VIEW.CARD ? 'Filter & Sort' : 'Filter'}
+              {dashboardView === DASHBOARD_VIEW.CARD
+                ? 'Filter & Sort'
+                : 'Filter'}
             </span>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-64">
-            {view === DASHBOARD_VIEW.CARD && (
+            {dashboardView === DASHBOARD_VIEW.CARD && (
               <>
                 <DropdownMenuGroup>
                   <DropdownMenuLabel>Sort cards</DropdownMenuLabel>
                   <DropdownMenuRadioGroup
                     value={sortOption}
                     onValueChange={(value) =>
-                      onSortOptionChange(value as DashboardSortOption)
+                      handleSortOptionChange(value as DashboardSortOption)
                     }
                   >
                     <DropdownMenuRadioItem
@@ -141,7 +133,7 @@ export function DashboardToolbar({
               <DropdownMenuCheckboxItem
                 checked={statusFilters.includes(DASHBOARD_SERVICE_STATUS.UP)}
                 onCheckedChange={() =>
-                  onStatusToggle(DASHBOARD_SERVICE_STATUS.UP)
+                  handleStatusToggle(DASHBOARD_SERVICE_STATUS.UP)
                 }
                 className="cursor-pointer"
               >
@@ -150,7 +142,7 @@ export function DashboardToolbar({
               <DropdownMenuCheckboxItem
                 checked={statusFilters.includes(DASHBOARD_SERVICE_STATUS.SLOW)}
                 onCheckedChange={() =>
-                  onStatusToggle(DASHBOARD_SERVICE_STATUS.SLOW)
+                  handleStatusToggle(DASHBOARD_SERVICE_STATUS.SLOW)
                 }
                 className="cursor-pointer"
               >
@@ -159,7 +151,7 @@ export function DashboardToolbar({
               <DropdownMenuCheckboxItem
                 checked={statusFilters.includes(DASHBOARD_SERVICE_STATUS.DOWN)}
                 onCheckedChange={() =>
-                  onStatusToggle(DASHBOARD_SERVICE_STATUS.DOWN)
+                  handleStatusToggle(DASHBOARD_SERVICE_STATUS.DOWN)
                 }
                 className="cursor-pointer"
               >
@@ -170,16 +162,18 @@ export function DashboardToolbar({
                   DASHBOARD_SERVICE_STATUS.RATE_LIMITED,
                 )}
                 onCheckedChange={() =>
-                  onStatusToggle(DASHBOARD_SERVICE_STATUS.RATE_LIMITED)
+                  handleStatusToggle(DASHBOARD_SERVICE_STATUS.RATE_LIMITED)
                 }
                 className="cursor-pointer"
               >
                 Rate limited
               </DropdownMenuCheckboxItem>
               <DropdownMenuCheckboxItem
-                checked={statusFilters.includes(DASHBOARD_SERVICE_STATUS.PENDING)}
+                checked={statusFilters.includes(
+                  DASHBOARD_SERVICE_STATUS.PENDING,
+                )}
                 onCheckedChange={() =>
-                  onStatusToggle(DASHBOARD_SERVICE_STATUS.PENDING)
+                  handleStatusToggle(DASHBOARD_SERVICE_STATUS.PENDING)
                 }
                 className="cursor-pointer"
               >
@@ -192,8 +186,8 @@ export function DashboardToolbar({
         <ToggleGroup
           variant="outline"
           size="lg"
-          value={[view]}
-          onValueChange={onViewChange}
+          value={[dashboardView]}
+          onValueChange={handleViewChange}
           className="hidden sm:flex"
         >
           <ToggleGroupItem
@@ -212,10 +206,13 @@ export function DashboardToolbar({
           </ToggleGroupItem>
         </ToggleGroup>
 
-        <Button size="lg" className="cursor-pointer" onClick={onAddService}>
+        <DialogTrigger
+          handle={addServiceDialogHandle}
+          render={<Button size="lg" className="cursor-pointer" />}
+        >
           <PlusIcon />
           Add New Service
-        </Button>
+        </DialogTrigger>
       </div>
     </div>
   );

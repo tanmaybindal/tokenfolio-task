@@ -8,59 +8,38 @@ export interface DashboardCardsSectionProps {
   services: Service[];
   totalResults: number;
   cardStart: number;
-  cardPageSize: number;
-  cardPageIndex: number;
   cardTotalPages: number;
-  onPageIndexChange: (updater: (prev: number) => number) => void;
-  onPageSizeChange: (size: number) => void;
-  onPageSelect: (page: number) => void;
+  paginationViewport: 'mobile' | 'desktop';
 }
 
 export function DashboardCardsSection({
   services,
   totalResults,
   cardStart,
-  cardPageSize,
-  cardPageIndex,
   cardTotalPages,
-  onPageIndexChange,
-  onPageSizeChange,
-  onPageSelect,
+  paginationViewport,
 }: DashboardCardsSectionProps) {
+  const pagination =
+    services.length > 0 ? (
+      paginationViewport === 'mobile' ? (
+        <CardsPaginationMobile
+          cardStart={cardStart}
+          totalResults={totalResults}
+          cardTotalPages={cardTotalPages}
+        />
+      ) : (
+        <CardsPaginationDesktop
+          cardStart={cardStart}
+          totalResults={totalResults}
+          cardTotalPages={cardTotalPages}
+        />
+      )
+    ) : null;
+
   return (
     <>
-      <div className="block sm:hidden">
-        <DashboardCardsGrid services={services} />
-
-        {services.length > 0 && (
-          <CardsPaginationMobile
-            cardStart={cardStart}
-            cardPageSize={cardPageSize}
-            totalResults={totalResults}
-            cardPageIndex={cardPageIndex}
-            cardTotalPages={cardTotalPages}
-            onPageIndexChange={onPageIndexChange}
-            onPageSizeChange={onPageSizeChange}
-          />
-        )}
-      </div>
-
-      <div className="hidden sm:block">
-        <DashboardCardsGrid services={services} />
-
-        {services.length > 0 && (
-          <CardsPaginationDesktop
-            cardStart={cardStart}
-            cardPageSize={cardPageSize}
-            totalResults={totalResults}
-            cardPageIndex={cardPageIndex}
-            cardTotalPages={cardTotalPages}
-            onPageIndexChange={onPageIndexChange}
-            onPageSizeChange={onPageSizeChange}
-            onPageSelect={onPageSelect}
-          />
-        )}
-      </div>
+      <DashboardCardsGrid services={services} />
+      {pagination}
     </>
   );
 }
