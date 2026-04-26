@@ -24,3 +24,5 @@ export function getServicesQueryOptions(initialServices?: Service[]) {
 export function useGetServices(initialServices?: Service[]) {
   return useQuery(getServicesQueryOptions(initialServices));
 }
+
+export { useRefreshServices } from './refresh-services';

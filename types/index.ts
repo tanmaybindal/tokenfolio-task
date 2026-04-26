@@ -1,5 +1,19 @@
-export const SERVICE_STATUSES = ['UP', 'SLOW', 'DOWN', 'PENDING'] as const;
-export type ServiceStatus = (typeof SERVICE_STATUSES)[number];
+export const SERVICE_STATUS = {
+  UP: 'UP',
+  SLOW: 'SLOW',
+  DOWN: 'DOWN',
+  RATE_LIMITED: 'RATE_LIMITED',
+  PENDING: 'PENDING',
+} as const;
+export type ServiceStatus = (typeof SERVICE_STATUS)[keyof typeof SERVICE_STATUS];
+export const SERVICE_STATUSES = Object.values(SERVICE_STATUS) as ServiceStatus[];
+export const SERVICE_ERROR_KIND = {
+  HTTP: 'HTTP',
+  TIMEOUT: 'TIMEOUT',
+  NETWORK: 'NETWORK',
+} as const;
+export type ServiceErrorKind =
+  (typeof SERVICE_ERROR_KIND)[keyof typeof SERVICE_ERROR_KIND];
 
 export interface Service {
   id: string;
@@ -11,6 +25,9 @@ export interface Service {
   lastCheckedAt: string | null;
   healthScore: number | null;
   history: number[]; // ring buffer: 1.0=UP, 0.5=SLOW, 0.0=DOWN, max 10
+  rateLimitedUntil?: string | null;
+  lastHttpStatus?: number | null;
+  lastErrorKind?: ServiceErrorKind | null;
 }
 
 export interface ServicesData {
@@ -20,6 +37,9 @@ export interface ServicesData {
 export interface CheckResult {
   status: Exclude<ServiceStatus, 'PENDING'>;
   latencyMs: number;
+  retryAfterMs?: number;
+  httpStatus?: number | null;
+  errorKind?: ServiceErrorKind | null;
 }
 
 // ServiceResponse = Service; history[] is included so the dashboard can build

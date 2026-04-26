@@ -1,25 +1,23 @@
 import { BulkActionBar } from './bulk-action-bar';
+import { ServiceResponse } from '@/types';
 
-interface ServiceTableCardHeaderProps {
+interface ServiceTableHeaderProps {
   title: string;
-  selectedIds: string[];
+  selectedServices: ServiceResponse[];
   onClearSelection: () => void;
-  onRefresh: () => void;
 }
 
-export function ServiceTableCardHeader({
+export function ServiceTableHeader({
   title,
-  selectedIds,
+  selectedServices,
   onClearSelection,
-  onRefresh,
-}: ServiceTableCardHeaderProps) {
+}: ServiceTableHeaderProps) {
   return (
     <div className="flex min-h-15 items-center border-b px-4 py-3">
-      {selectedIds.length > 0 ? (
+      {selectedServices.length > 0 ? (
         <BulkActionBar
-          selectedIds={selectedIds}
+          selectedServices={selectedServices}
           onClear={onClearSelection}
-          onRefresh={onRefresh}
         />
       ) : (
         <h2 className="text-base font-semibold">{title}</h2>

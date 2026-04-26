@@ -10,24 +10,19 @@ import {
 } from '@/components/ui/table';
 import { ServiceResponse } from '@/types';
 
-import { serviceTableColumns } from './service-table-columns';
-
 interface ServiceTableDataProps {
   table: TanStackTable<ServiceResponse>;
 }
 
 export function ServiceTableData({ table }: ServiceTableDataProps) {
   'use no memo'; // table ref is stable; row model / selection live inside TanStack (React Compiler)
-  {
-    /*
-          Rows scroll within this box. max-h uses dvh (dynamic viewport height) so
-          it accounts for mobile browser chrome. The ~30rem offset covers everything
-          above the table: navbar + headings + stats cards + toolbar + card header +
-          pagination footer. min-h-32 guarantees at least a few rows are always visible.
-        */
-  }
+  const rows = table.getRowModel().rows;
+  const pageSize = table.getState().pagination.pageSize;
+  const fillerRowCount = Math.max(0, pageSize - rows.length);
+  const colSpan = table.getVisibleLeafColumns().length;
+
   return (
-    <div className="max-h-[calc(100dvh-30rem)] min-h-32 overflow-auto">
+    <div className="max-h-[calc(100dvh-34rem)] min-h-104 overflow-auto">
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((hg) => (
@@ -46,8 +41,8 @@ export function ServiceTableData({ table }: ServiceTableDataProps) {
           ))}
         </TableHeader>
         <TableBody>
-          {table.getRowModel().rows.length ? (
-            table.getRowModel().rows.map((row) => (
+          {rows.length ? (
+            rows.map((row) => (
               <TableRow key={row.id}>
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id}>
@@ -59,13 +54,20 @@ export function ServiceTableData({ table }: ServiceTableDataProps) {
           ) : (
             <TableRow>
               <TableCell
-                colSpan={serviceTableColumns.length}
+                colSpan={colSpan}
                 className="h-24 text-center text-muted-foreground"
               >
                 No services found.
               </TableCell>
             </TableRow>
           )}
+          {rows.length > 0 &&
+            fillerRowCount > 0 &&
+            Array.from({ length: fillerRowCount }, (_, i) => (
+              <TableRow key={`filler-${i}`} aria-hidden>
+                <TableCell colSpan={colSpan} className="h-[51px]" />
+              </TableRow>
+            ))}
         </TableBody>
       </Table>
     </div>

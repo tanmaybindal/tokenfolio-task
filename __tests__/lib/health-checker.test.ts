@@ -5,6 +5,7 @@ import {
   computeHealthScore,
   STATUS_WEIGHT,
 } from '@/lib/health-checker';
+import { DEFAULT_RATE_LIMIT_COOLDOWN_MS } from '@/lib/rate-limit';
 
 // ── computeHealthScore ──────────────────────────────────────────────────────
 
@@ -72,19 +73,83 @@ describe('checkHealth', () => {
     expect(result.latencyMs).toBeGreaterThanOrEqual(0);
   });
 
-  test('returns DOWN for non-2xx response', async () => {
-    vi.mocked(global.fetch).mockResolvedValueOnce({ ok: false } as Response);
+  test('returns DOWN for non-2xx response with errorKind HTTP', async () => {
+    vi.mocked(global.fetch).mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+    } as Response);
     const result = await checkHealth('https://example.com');
     expect(result.status).toBe('DOWN');
+    expect(result.httpStatus).toBe(500);
+    expect(result.errorKind).toBe('HTTP');
   });
 
-  test('returns DOWN for network failure', async () => {
+  test('returns DOWN for 403 response with httpStatus 403', async () => {
+    vi.mocked(global.fetch).mockResolvedValueOnce({
+      ok: false,
+      status: 403,
+    } as Response);
+    const result = await checkHealth('https://example.com');
+    expect(result.status).toBe('DOWN');
+    expect(result.httpStatus).toBe(403);
+    expect(result.errorKind).toBe('HTTP');
+  });
+
+  test('returns RATE_LIMITED for 429 with Retry-After seconds', async () => {
+    vi.mocked(global.fetch).mockResolvedValueOnce({
+      ok: false,
+      status: 429,
+      headers: { get: (h: string) => (h === 'retry-after' ? '120' : null) },
+    } as unknown as Response);
+    const result = await checkHealth('https://example.com');
+    expect(result.status).toBe('RATE_LIMITED');
+    expect(result.retryAfterMs).toBe(120_000);
+    expect(result.httpStatus).toBe(429);
+    expect(result.errorKind).toBe('HTTP');
+  });
+
+  test('returns RATE_LIMITED for 429 with Retry-After HTTP-date', async () => {
+    const future = new Date(Date.now() + 60_000).toUTCString();
+    vi.mocked(global.fetch).mockResolvedValueOnce({
+      ok: false,
+      status: 429,
+      headers: { get: (h: string) => (h === 'retry-after' ? future : null) },
+    } as unknown as Response);
+    const result = await checkHealth('https://example.com');
+    expect(result.status).toBe('RATE_LIMITED');
+    expect(result.retryAfterMs).toBeGreaterThan(0);
+    expect(result.retryAfterMs).toBeLessThanOrEqual(60_000);
+  });
+
+  test('returns RATE_LIMITED for 429 with no Retry-After — uses default cooldown', async () => {
+    vi.mocked(global.fetch).mockResolvedValueOnce({
+      ok: false,
+      status: 429,
+      headers: { get: () => null },
+    } as unknown as Response);
+    const result = await checkHealth('https://example.com');
+    expect(result.status).toBe('RATE_LIMITED');
+    expect(result.retryAfterMs).toBe(DEFAULT_RATE_LIMIT_COOLDOWN_MS);
+  });
+
+  test('returns DOWN for network failure with errorKind NETWORK', async () => {
     vi.mocked(global.fetch).mockRejectedValueOnce(new Error('ECONNREFUSED'));
     const result = await checkHealth('https://example.com');
     expect(result.status).toBe('DOWN');
+    expect(result.errorKind).toBe('NETWORK');
+    expect(result.httpStatus).toBeNull();
   });
 
-  test('returns DOWN for timeout (AbortError)', async () => {
+  test('returns DOWN for timeout with errorKind TIMEOUT', async () => {
+    const timeoutErr = new DOMException('The operation was aborted', 'TimeoutError');
+    vi.mocked(global.fetch).mockRejectedValueOnce(timeoutErr);
+    const result = await checkHealth('https://example.com');
+    expect(result.status).toBe('DOWN');
+    expect(result.errorKind).toBe('TIMEOUT');
+    expect(result.httpStatus).toBeNull();
+  });
+
+  test('returns DOWN for AbortError (non-timeout) with errorKind NETWORK', async () => {
     vi.mocked(global.fetch).mockRejectedValueOnce(
       Object.assign(new Error('The operation was aborted'), {
         name: 'AbortError',
@@ -92,6 +157,7 @@ describe('checkHealth', () => {
     );
     const result = await checkHealth('https://example.com');
     expect(result.status).toBe('DOWN');
+    expect(result.errorKind).toBe('NETWORK');
   });
 
   // ── mock:// URL scheme ────────────────────────────────────────────────────

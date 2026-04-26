@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 
+import { applyCheckResult } from '@/lib/apply-check-result';
 import {
   checkHealth,
   computeHealthScore,
@@ -41,14 +42,7 @@ export async function POST(req: Request) {
         weight,
       );
 
-      return {
-        ...service,
-        status: result.status,
-        latencyMs: result.latencyMs,
-        lastCheckedAt: new Date().toISOString(),
-        healthScore,
-        history,
-      };
+      return applyCheckResult(service, result, history, healthScore);
     }),
   );
 

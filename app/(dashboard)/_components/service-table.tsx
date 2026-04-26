@@ -4,99 +4,84 @@ import {
   getCoreRowModel,
   getPaginationRowModel,
   getSortedRowModel,
-  PaginationState,
   RowSelectionState,
   SortingState,
   useReactTable,
 } from '@tanstack/react-table';
-import { useMemo, useState } from 'react';
+import { parseAsIndex, parseAsInteger, useQueryStates } from 'nuqs';
+import { useEffect, useState } from 'react';
 
 import { ServiceResponse } from '@/types';
 
-import { ServiceDialog } from './service-dialog';
-import { ServiceTableCardHeader } from './service-table-card-header';
 import { serviceTableColumns } from './service-table-columns';
 import { ServiceTableData } from './service-table-data';
-import { ServiceTableDeleteDialog } from './service-table-delete-dialog';
+import { ServiceTableHeader } from './service-table-header';
 import { ServiceTablePagination } from './service-table-pagination';
 
 interface ServiceTableProps {
   services: ServiceResponse[];
-  onRefresh: () => void;
 }
 
-export function ServiceTable({ services, onRefresh }: ServiceTableProps) {
+export function ServiceTable({ services }: ServiceTableProps) {
+  'use no memo';
+
   const [sorting, setSorting] = useState<SortingState>([]);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
-  const [pagination, setPagination] = useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: 10,
-  });
-  const [deleteTarget, setDeleteTarget] = useState<ServiceResponse | null>(
-    null,
-  );
-  const [renameTarget, setRenameTarget] = useState<ServiceResponse | null>(
-    null,
-  );
-
-  const tableMeta = useMemo(
-    () => ({
-      onRefresh,
-      onRename: setRenameTarget,
-      onDelete: setDeleteTarget,
-    }),
-    [onRefresh],
-  );
+  const [{ tablePageIndex, tablePageSize }, setPaginationState] =
+    useQueryStates({
+      tablePageIndex: parseAsIndex.withDefault(0),
+      tablePageSize: parseAsInteger.withDefault(10),
+    });
 
   const table = useReactTable({
     data: services,
     columns: serviceTableColumns,
-    meta: tableMeta,
-    state: { sorting, rowSelection, pagination },
+    getRowId: (row) => row.id,
+    autoResetPageIndex: false,
+    state: {
+      sorting,
+      rowSelection,
+      pagination: { pageIndex: tablePageIndex, pageSize: tablePageSize },
+    },
     onSortingChange: setSorting,
     onRowSelectionChange: setRowSelection,
-    onPaginationChange: setPagination,
+    onPaginationChange: (updater) => {
+      const current = { pageIndex: tablePageIndex, pageSize: tablePageSize };
+      const next = typeof updater === 'function' ? updater(current) : updater;
+      void setPaginationState({
+        tablePageIndex: next.pageIndex,
+        tablePageSize: next.pageSize,
+      });
+    },
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
   });
 
-  const selectedIds = table
+  useEffect(() => {
+    const maxPageIndex = Math.max(0, table.getPageCount() - 1);
+    if (tablePageIndex > maxPageIndex) {
+      void setPaginationState({ tablePageIndex: maxPageIndex });
+    }
+  }, [tablePageIndex, services.length, setPaginationState, table]);
+
+  const selectedServices = table
     .getSelectedRowModel()
-    .rows.map((r) => r.original.id);
+    .rows.map((r) => r.original);
 
   return (
     <div className="flex flex-col gap-3">
       <div className="overflow-hidden rounded-lg border bg-card">
-        <ServiceTableCardHeader
+        <ServiceTableHeader
           title="Monitored APIs"
-          selectedIds={selectedIds}
+          selectedServices={selectedServices}
           onClearSelection={() => setRowSelection({})}
-          onRefresh={onRefresh}
         />
 
         <ServiceTableData table={table} />
 
         <ServiceTablePagination table={table} />
       </div>
-
-      <ServiceTableDeleteDialog
-        target={deleteTarget}
-        onOpenChange={(open) => {
-          if (!open) setDeleteTarget(null);
-        }}
-        onDeleted={onRefresh}
-      />
-
-      <ServiceDialog
-        open={!!renameTarget}
-        onOpenChange={(open) => {
-          if (!open) setRenameTarget(null);
-        }}
-        mode="edit"
-        service={renameTarget ?? undefined}
-        onSuccess={onRefresh}
-      />
     </div>
   );
 }

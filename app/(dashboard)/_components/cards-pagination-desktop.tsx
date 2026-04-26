@@ -1,3 +1,5 @@
+'use client';
+
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -10,16 +12,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useDashboardStateContext } from './dashboard-state-provider';
 
 interface CardsPaginationDesktopProps {
   cardStart: number;
-  cardPageSize: number;
   totalResults: number;
-  cardPageIndex: number;
   cardTotalPages: number;
-  onPageIndexChange: (updater: (prev: number) => number) => void;
-  onPageSizeChange: (size: number) => void;
-  onPageSelect: (page: number) => void;
 }
 
 function CardsSummary({
@@ -41,14 +39,17 @@ function CardsSummary({
 
 export function CardsPaginationDesktop({
   cardStart,
-  cardPageSize,
   totalResults,
-  cardPageIndex,
   cardTotalPages,
-  onPageIndexChange,
-  onPageSizeChange,
-  onPageSelect,
 }: CardsPaginationDesktopProps) {
+  const {
+    cardPageIndex,
+    cardPageSize,
+    handlePageIndexChange,
+    handlePageSelect,
+    handlePageSizeChange,
+  } = useDashboardStateContext();
+
   return (
     <div className="mt-4 flex items-center justify-between">
       <CardsSummary
@@ -63,7 +64,7 @@ export function CardsPaginationDesktop({
           </ButtonGroupText>
           <Select
             value={cardPageSize}
-            onValueChange={(value) => onPageSizeChange(Number(value))}
+            onValueChange={(value) => handlePageSizeChange(Number(value))}
           >
             <SelectTrigger className="h-8 min-w-14 cursor-pointer px-2.5">
               <SelectValue />
@@ -88,7 +89,7 @@ export function CardsPaginationDesktop({
             variant="outline"
             size="icon"
             className="size-8 cursor-pointer"
-            onClick={() => onPageIndexChange((p) => p - 1)}
+            onClick={() => handlePageIndexChange((p) => p - 1)}
             disabled={cardPageIndex === 0}
             aria-label="Go to previous page"
           >
@@ -97,14 +98,10 @@ export function CardsPaginationDesktop({
           {Array.from({ length: cardTotalPages }, (_, i) => (
             <Button
               key={i}
-              variant="outline"
+              variant={cardPageIndex === i ? 'default' : 'outline'}
               size="icon"
-              onClick={() => onPageSelect(i)}
-              className={`size-8 cursor-pointer ${
-                cardPageIndex === i
-                  ? 'border-transparent bg-primary text-primary-foreground hover:bg-primary/90'
-                  : ''
-              }`}
+              onClick={() => handlePageSelect(i)}
+              className="size-8 cursor-pointer"
               aria-label={`Go to page ${i + 1}`}
               aria-current={cardPageIndex === i ? 'page' : undefined}
             >
@@ -115,7 +112,7 @@ export function CardsPaginationDesktop({
             variant="outline"
             size="icon"
             className="size-8 cursor-pointer"
-            onClick={() => onPageIndexChange((p) => p + 1)}
+            onClick={() => handlePageIndexChange((p) => p + 1)}
             disabled={cardPageIndex >= cardTotalPages - 1}
             aria-label="Go to next page"
           >

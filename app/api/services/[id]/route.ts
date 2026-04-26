@@ -54,6 +54,17 @@ export async function PATCH(
     return NextResponse.json({ error: 'Service not found' }, { status: 404 });
   }
 
+  const normalizedUrl = url.toLowerCase();
+  const duplicate = data.services.find(
+    (s) => s.id !== id && s.url.toLowerCase() === normalizedUrl,
+  );
+  if (duplicate) {
+    return NextResponse.json(
+      { error: 'A service with this URL already exists' },
+      { status: 409 },
+    );
+  }
+
   data.services[index] = {
     ...data.services[index],
     name,
@@ -64,6 +75,9 @@ export async function PATCH(
     lastCheckedAt: null,
     healthScore: null,
     history: [],
+    lastHttpStatus: null,
+    lastErrorKind: null,
+    rateLimitedUntil: null,
   };
   await writeServices(data);
 

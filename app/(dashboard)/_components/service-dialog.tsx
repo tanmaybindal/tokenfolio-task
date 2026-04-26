@@ -1,11 +1,15 @@
 'use client';
 
+import { Dialog as DialogPrimitive } from '@base-ui/react/dialog';
+import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
+import { GET_SERVICES_QUERY_KEY } from '@/app/(dashboard)/_hooks/get-services';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -19,37 +23,52 @@ import {
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
-import { ServiceResponse } from '@/types';
+import { Service, ServiceResponse } from '@/types';
 
 type Mode = 'add' | 'edit';
 
-interface ServiceDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  mode: Mode;
-  service?: ServiceResponse;
-  onSuccess: () => void;
+function normalizeUrlForCompare(rawUrl: string): string {
+  const parsed = new URL(rawUrl.trim());
+  parsed.hash = '';
+  parsed.hostname = parsed.hostname.toLowerCase();
+  return parsed.toString();
 }
 
-// Outer shell only controls visibility — no state here.
-// DialogForm mounts fresh each time `open` becomes true, so useState
-// initializers run correctly without needing a reset effect.
-export function ServiceDialog(props: ServiceDialogProps) {
+interface ServiceDialogProps {
+  handle: DialogPrimitive.Root.Props['handle'];
+  mode: Mode;
+  onSuccess?: () => void;
+}
+
+export function ServiceDialog({ handle, mode, onSuccess }: ServiceDialogProps) {
+  const dialogHandle = handle as { close?: () => void };
+
   return (
-    <Dialog open={props.open} onOpenChange={props.onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>
-            {props.mode === 'add' ? 'Add Service' : 'Edit Service'}
-          </DialogTitle>
-          <DialogDescription>
-            {props.mode === 'add'
-              ? 'Enter the service name and URL to monitor.'
-              : 'Update the service name and URL.'}
-          </DialogDescription>
-        </DialogHeader>
-        {props.open && <DialogForm {...props} />}
-      </DialogContent>
+    <Dialog handle={handle}>
+      {({ payload }) => (
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {mode === 'add' ? 'Add Service' : 'Edit Service'}
+            </DialogTitle>
+            <DialogDescription>
+              {mode === 'add'
+                ? 'Enter the service name and URL to monitor.'
+                : 'Update the service name and URL.'}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogForm
+            mode={mode}
+            service={
+              mode === 'edit'
+                ? (payload as ServiceResponse | undefined)
+                : undefined
+            }
+            onSuccess={onSuccess}
+            onClose={() => dialogHandle.close?.()}
+          />
+        </DialogContent>
+      )}
     </Dialog>
   );
 }
@@ -58,8 +77,14 @@ function DialogForm({
   mode,
   service,
   onSuccess,
-  onOpenChange,
-}: ServiceDialogProps) {
+  onClose,
+}: {
+  mode: Mode;
+  service?: ServiceResponse;
+  onSuccess?: () => void;
+  onClose: () => void;
+}) {
+  const queryClient = useQueryClient();
   const [name, setName] = useState(
     mode === 'edit' && service ? service.name : '',
   );
@@ -104,6 +129,23 @@ function DialogForm({
       return;
     }
 
+    const currentServices =
+      queryClient.getQueryData<Service[]>(GET_SERVICES_QUERY_KEY) ?? [];
+    const normalizedInputUrl = normalizeUrlForCompare(trimmedUrl);
+    const duplicateExists = currentServices.some((existing) => {
+      if (mode === 'edit' && existing.id === service?.id) return false;
+      try {
+        return normalizeUrlForCompare(existing.url) === normalizedInputUrl;
+      } catch {
+        return existing.url.trim() === trimmedUrl;
+      }
+    });
+
+    if (duplicateExists) {
+      setUrlError('This URL is already being monitored');
+      return;
+    }
+
     setLoading(true);
     try {
       if (mode === 'add') {
@@ -117,6 +159,7 @@ function DialogForm({
           setUrlError(err.error ?? 'Failed to add service');
           return;
         }
+        void queryClient.invalidateQueries({ queryKey: GET_SERVICES_QUERY_KEY });
         toast.success('Service added — running initial health check…');
       } else {
         const res = await fetch(`/api/services/${service!.id}`, {
@@ -129,10 +172,11 @@ function DialogForm({
           setUrlError(err.error ?? 'Failed to update service');
           return;
         }
+        void queryClient.invalidateQueries({ queryKey: GET_SERVICES_QUERY_KEY });
         toast.success('Service updated');
       }
-      onSuccess();
-      onOpenChange(false);
+      onSuccess?.();
+      onClose();
     } finally {
       setLoading(false);
     }
@@ -179,14 +223,12 @@ function DialogForm({
         </Field>
       </FieldGroup>
       <div className="mt-6 flex justify-end gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => onOpenChange(false)}
+        <DialogClose
           disabled={loading}
+          render={<Button type="button" variant="outline" />}
         >
           Cancel
-        </Button>
+        </DialogClose>
         <Button type="submit" disabled={loading}>
           {loading && <Spinner className="mr-2 size-4" />}
           {mode === 'add' ? 'Add Service' : 'Save Changes'}

@@ -1,6 +1,7 @@
 import { ActivityIcon } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { DialogTrigger } from '@/components/ui/dialog';
 import {
   Empty,
   EmptyContent,
@@ -9,12 +10,9 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@/components/ui/empty';
+import { addServiceDialogHandle } from './service-dialog-handles';
 
-interface EmptyServicesProps {
-  onAdd: () => void;
-}
-
-export function EmptyServices({ onAdd }: EmptyServicesProps) {
+export function EmptyServices() {
   return (
     <Empty>
       <EmptyHeader>
@@ -27,7 +25,10 @@ export function EmptyServices({ onAdd }: EmptyServicesProps) {
         </EmptyDescription>
       </EmptyHeader>
       <EmptyContent>
-        <Button onClick={onAdd}>+ Add Service</Button>
+        <DialogTrigger
+          handle={addServiceDialogHandle}
+          render={<Button>+ Add Service</Button>}
+        />
       </EmptyContent>
     </Empty>
   );

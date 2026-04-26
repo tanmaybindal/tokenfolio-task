@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import { NextResponse } from 'next/server';
 import { after } from 'next/server';
 
+import { applyCheckResult } from '@/lib/apply-check-result';
 import {
   checkHealth,
   computeHealthScore,
@@ -62,6 +63,17 @@ export async function POST(req: Request) {
 
   const data = await readServices();
 
+  const normalizedUrl = url.toLowerCase();
+  const duplicate = data.services.find(
+    (s) => s.url.toLowerCase() === normalizedUrl,
+  );
+  if (duplicate) {
+    return NextResponse.json(
+      { error: 'A service with this URL already exists' },
+      { status: 409 },
+    );
+  }
+
   const newService: Service = {
     id: crypto.randomBytes(4).toString('hex'),
     name,
@@ -86,14 +98,7 @@ export async function POST(req: Request) {
     const fresh = await readServices();
     fresh.services = fresh.services.map((s) =>
       s.id === newService.id
-        ? {
-            ...s,
-            status: result.status,
-            latencyMs: result.latencyMs,
-            lastCheckedAt: new Date().toISOString(),
-            healthScore,
-            history,
-          }
+        ? applyCheckResult(s, result, history, healthScore)
         : s,
     );
     await writeServices(fresh);

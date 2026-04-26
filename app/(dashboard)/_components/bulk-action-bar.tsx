@@ -1,51 +1,44 @@
 'use client';
 
+import { useIsFetching } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
-import { useDeleteServices } from '@/app/(dashboard)/_hooks/delete-services';
-import { useRefreshServices } from '@/app/(dashboard)/_hooks/refresh-services';
+import {
+  deleteServiceDialogHandle,
+} from '@/app/(dashboard)/_components/service-dialog-handles';
+import {
+  GET_SERVICES_QUERY_KEY,
+  useRefreshServices,
+} from '@/app/(dashboard)/_hooks/get-services';
+import { AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
+import { ServiceResponse } from '@/types';
 
 interface BulkActionBarProps {
-  selectedIds: string[];
+  selectedServices: ServiceResponse[];
   onClear: () => void;
-  onRefresh: () => void;
 }
 
 export function BulkActionBar({
-  selectedIds,
+  selectedServices,
   onClear,
-  onRefresh,
 }: BulkActionBarProps) {
-  const { mutateAsync: deleteServices, isPending: isDeleting } =
-    useDeleteServices();
-  const { mutateAsync: refreshServices, isPending: isRefreshing } =
-    useRefreshServices();
+  const {
+    mutateAsync: refreshServices,
+    isPending: isBulkRefreshing,
+  } = useRefreshServices();
+  const isRefreshing = useIsFetching({ queryKey: GET_SERVICES_QUERY_KEY }) > 0;
+  const selectedIds = selectedServices.map((service) => service.id);
 
   if (selectedIds.length === 0) return null;
 
   async function handleBulkRefresh() {
-    try {
-      await refreshServices(selectedIds);
-      toast.success(
-        `Refreshed ${selectedIds.length} service${selectedIds.length > 1 ? 's' : ''}`,
-      );
-      onRefresh();
-      onClear();
-    } catch {
-      toast.error('Failed to refresh selected services');
-    }
-  }
-
-  async function handleBulkDelete() {
-    try {
-      await deleteServices(selectedIds);
-      onRefresh();
-      onClear();
-    } catch {
-      // Error toast is handled in the mutation hook.
-    }
+    await refreshServices(selectedIds);
+    toast.success(
+      `Refreshed ${selectedIds.length} service${selectedIds.length > 1 ? 's' : ''}`,
+    );
+    onClear();
   }
 
   return (
@@ -58,22 +51,28 @@ export function BulkActionBar({
           variant="outline"
           size="sm"
           onClick={handleBulkRefresh}
-          disabled={isRefreshing || isDeleting}
+          disabled={isRefreshing || isBulkRefreshing}
           className="cursor-pointer"
         >
-          {isRefreshing && <Spinner className="mr-2 size-4" />}
+          {(isRefreshing || isBulkRefreshing) && (
+            <Spinner className="mr-2 size-4" />
+          )}
           Refresh Selected
         </Button>
-        <Button
-          variant="destructive"
-          size="sm"
-          onClick={handleBulkDelete}
-          disabled={isDeleting || isRefreshing}
-          className="cursor-pointer"
+        <AlertDialogTrigger
+          handle={deleteServiceDialogHandle}
+          payload={selectedServices}
+          render={
+            <Button
+              variant="destructive"
+              size="sm"
+              disabled={isRefreshing}
+              className="cursor-pointer"
+            />
+          }
         >
-          {isDeleting && <Spinner className="mr-2 size-4" />}
           Delete Selected
-        </Button>
+        </AlertDialogTrigger>
         <Button
           variant="ghost"
           size="sm"

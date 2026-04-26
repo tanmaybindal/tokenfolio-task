@@ -3,39 +3,37 @@ import { formatDistanceToNow } from 'date-fns';
 import { ArrowDownIcon, ArrowUpDownIcon, ArrowUpIcon } from 'lucide-react';
 
 import { formatLatencyLabel } from '@/app/(dashboard)/_libs/format-latency-label';
-import '@/app/(dashboard)/_types/tanstack-table-meta';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
-import { ServiceResponse } from '@/types';
+import { SERVICE_ERROR_KIND, ServiceResponse } from '@/types';
 
 import { HealthHistoryBars } from './health-history-bars';
+import { RateLimitCountdown } from './rate-limit-countdown';
+import { ServiceStatusBadge } from './service-status-badge';
 import { ServiceTableRowActions } from './service-table-row-actions';
 
 const STATUS_ORDER: Record<string, number> = {
   UP: 0,
   SLOW: 1,
   DOWN: 2,
-  PENDING: 3,
-};
-
-const STATUS_BADGE: Record<string, string> = {
-  UP: 'bg-green-50 text-green-700 border-green-200 dark:bg-green-950/40 dark:text-green-400 dark:border-green-800',
-  SLOW: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800',
-  DOWN: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-400 dark:border-red-800',
-  PENDING: 'bg-muted text-muted-foreground border-border',
-};
-
-const STATUS_DOT: Record<string, string> = {
-  UP: 'bg-green-500',
-  SLOW: 'bg-amber-500',
-  DOWN: 'bg-red-500',
-  PENDING: 'bg-muted-foreground',
+  RATE_LIMITED: 3,
+  PENDING: 4,
 };
 
 function SortIcon({ sorted }: { sorted: false | 'asc' | 'desc' }) {
   if (sorted === 'asc') return <ArrowUpIcon className="ml-1 size-3" />;
   if (sorted === 'desc') return <ArrowDownIcon className="ml-1 size-3" />;
   return <ArrowUpDownIcon className="ml-1 size-3 opacity-40" />;
+}
+
+function getDownLabel(service: ServiceResponse): string {
+  if (service.status === 'RATE_LIMITED') return 'Rate limited';
+  if (service.lastHttpStatus === 403) return '403 Forbidden';
+  if (service.lastHttpStatus != null) return `${service.lastHttpStatus} Error`;
+  if (service.lastErrorKind === SERVICE_ERROR_KIND.TIMEOUT) return 'Timeout';
+  if (service.lastErrorKind === SERVICE_ERROR_KIND.NETWORK)
+    return 'Network error';
+  return 'Timeout';
 }
 
 export const serviceTableColumns: ColumnDef<ServiceResponse>[] = [
@@ -86,25 +84,17 @@ export const serviceTableColumns: ColumnDef<ServiceResponse>[] = [
     header: ({ column }) => (
       <button
         type="button"
-        className="flex w-full cursor-pointer items-center justify-center text-xs font-semibold tracking-wider uppercase"
+        className="flex w-full cursor-pointer items-center justify-start text-xs font-semibold tracking-wider uppercase"
         onClick={() => column.toggleSorting()}
       >
         Status <SortIcon sorted={column.getIsSorted()} />
       </button>
     ),
     cell: ({ row }) => {
-      const status = row.original.status;
+      const service = row.original;
       return (
-        <div className="flex justify-center">
-          <span
-            className={cn(
-              'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold',
-              STATUS_BADGE[status],
-            )}
-          >
-            <span className={cn('size-1.5 rounded-full', STATUS_DOT[status])} />
-            {status}
-          </span>
+        <div className="flex justify-start">
+          <ServiceStatusBadge service={service} />
         </div>
       );
     },
@@ -123,16 +113,28 @@ export const serviceTableColumns: ColumnDef<ServiceResponse>[] = [
       </button>
     ),
     cell: ({ row }) => (
-      <span
-        className={cn(
-          'font-medium tabular-nums',
-          row.original.status === 'DOWN' && 'text-destructive',
+      <div className="flex flex-col">
+        <span
+          className={cn(
+            'font-medium tabular-nums',
+            (row.original.status === 'DOWN' ||
+              row.original.status === 'RATE_LIMITED') &&
+              'text-destructive',
+          )}
+        >
+          {row.original.status === 'UP' || row.original.status === 'SLOW'
+            ? row.original.latencyMs != null
+              ? formatLatencyLabel(row.original.latencyMs)
+              : '—'
+            : getDownLabel(row.original)}
+        </span>
+        {row.original.status === 'RATE_LIMITED' && (
+          <RateLimitCountdown
+            rateLimitedUntil={row.original.rateLimitedUntil}
+            className="text-xs text-muted-foreground"
+          />
         )}
-      >
-        {row.original.latencyMs != null
-          ? formatLatencyLabel(row.original.latencyMs)
-          : 'Timeout'}
-      </span>
+      </div>
     ),
   },
   {
@@ -198,8 +200,8 @@ export const serviceTableColumns: ColumnDef<ServiceResponse>[] = [
               style={{ width: `${pct}%` }}
             />
           </div>
-          <span className="w-7 text-right text-sm font-semibold tabular-nums">
-            {score ?? '—'}
+          <span className="w-10 text-right text-sm font-semibold tabular-nums">
+            {score != null ? `${score}%` : '—'}
           </span>
         </div>
       );
@@ -212,17 +214,10 @@ export const serviceTableColumns: ColumnDef<ServiceResponse>[] = [
         Actions
       </span>
     ),
-    cell: ({ row, table }) => {
-      const meta = table.options.meta;
-      if (!meta) return null;
+    cell: ({ row }) => {
       return (
         <div className="flex justify-center">
-          <ServiceTableRowActions
-            service={row.original}
-            onRefresh={meta.onRefresh}
-            onRename={() => meta.onRename(row.original)}
-            onDelete={() => meta.onDelete(row.original)}
-          />
+          <ServiceTableRowActions service={row.original} />
         </div>
       );
     },

@@ -2,8 +2,14 @@
 
 import { MoreHorizontalIcon } from 'lucide-react';
 
-import { useRefreshServices } from '@/app/(dashboard)/_hooks/refresh-services';
+import {
+  deleteServiceDialogHandle,
+  editServiceDialogHandle,
+} from '@/app/(dashboard)/_components/service-dialog-handles';
+import { useRefreshServices } from '@/app/(dashboard)/_hooks/get-services';
+import { AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import { DialogTrigger } from '@/components/ui/dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,17 +22,11 @@ import { ServiceResponse } from '@/types';
 
 export function ServiceTableRowActions({
   service,
-  onRefresh,
-  onRename,
-  onDelete,
 }: {
   service: ServiceResponse;
-  onRefresh: () => void;
-  onRename: () => void;
-  onDelete: () => void;
 }) {
   'use no memo';
-  const { mutateAsync: refreshService, isPending: refreshing } =
+  const { mutateAsync: refreshServices, isPending: refreshing } =
     useRefreshServices();
 
   return (
@@ -48,24 +48,32 @@ export function ServiceTableRowActions({
             className="cursor-pointer"
             disabled={refreshing}
             onClick={async () => {
-              await refreshService([service.id]);
-              onRefresh();
+              await refreshServices([service.id]);
             }}
           >
             Refresh
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={onRename} className="cursor-pointer">
+          <DialogTrigger
+            handle={editServiceDialogHandle}
+            nativeButton={false}
+            payload={service}
+            render={<DropdownMenuItem className="cursor-pointer" />}
+          >
             Edit
-          </DropdownMenuItem>
+          </DialogTrigger>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem
-            className="cursor-pointer text-destructive focus:text-destructive"
-            onClick={onDelete}
+          <AlertDialogTrigger
+            handle={deleteServiceDialogHandle}
+            nativeButton={false}
+            payload={service}
+            render={
+              <DropdownMenuItem className="cursor-pointer text-destructive focus:text-destructive" />
+            }
           >
             Delete
-          </DropdownMenuItem>
+          </AlertDialogTrigger>
         </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>

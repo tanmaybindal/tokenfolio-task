@@ -1,3 +1,4 @@
+import { applyCheckResult } from './apply-check-result';
 import {
   checkHealth,
   computeHealthScore,
@@ -31,14 +32,7 @@ async function runChecks(): Promise<void> {
         service.history,
         weight,
       );
-      return {
-        ...service,
-        status: result.status,
-        latencyMs: result.latencyMs,
-        lastCheckedAt: new Date().toISOString(),
-        healthScore,
-        history,
-      };
+      return applyCheckResult(service, result, history, healthScore);
     }),
   );
 

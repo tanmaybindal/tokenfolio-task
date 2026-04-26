@@ -1,3 +1,5 @@
+'use client';
+
 import {
   AlertTriangleIcon,
   CheckCircle2Icon,
@@ -7,32 +9,32 @@ import {
 
 import { DASHBOARD_SERVICE_STATUS } from '@/app/(dashboard)/_constants/dashboard';
 import { cn } from '@/lib/utils';
-import { Service } from '@/types';
-import { ServiceStatus } from '@/types';
+import { Service, ServiceStatus } from '@/types';
+
+import { useDashboardStateContext } from './dashboard-state-provider';
 
 type MetricCardFilter = ServiceStatus | 'ALL';
 
 interface DashboardMetricCardsProps {
   services: Service[];
-  statusFilters: ServiceStatus[];
-  onMetricFilterChange: (filter: MetricCardFilter) => void;
 }
 
 export function getActiveMetricCard(statusFilters: ServiceStatus[]) {
   const hasAllStatuses =
     statusFilters.includes(DASHBOARD_SERVICE_STATUS.UP) &&
     statusFilters.includes(DASHBOARD_SERVICE_STATUS.SLOW) &&
-    statusFilters.includes(DASHBOARD_SERVICE_STATUS.DOWN);
-  if (hasAllStatuses && statusFilters.length === 3) return 'ALL';
+    statusFilters.includes(DASHBOARD_SERVICE_STATUS.DOWN) &&
+    statusFilters.includes(DASHBOARD_SERVICE_STATUS.RATE_LIMITED) &&
+    statusFilters.includes(DASHBOARD_SERVICE_STATUS.PENDING);
+  if (hasAllStatuses && statusFilters.length === 5) return 'ALL';
   if (statusFilters.length === 1) return statusFilters[0];
   return null;
 }
 
-export function DashboardMetricCards({
-  services,
-  statusFilters,
-  onMetricFilterChange,
-}: DashboardMetricCardsProps) {
+export function DashboardMetricCards({ services }: DashboardMetricCardsProps) {
+  const { handleMetricFilterChange, statusFilters } =
+    useDashboardStateContext();
+
   const total = services.length;
   const up = services.filter(
     (s) => s.status === DASHBOARD_SERVICE_STATUS.UP,
@@ -42,6 +44,9 @@ export function DashboardMetricCards({
   ).length;
   const down = services.filter(
     (s) => s.status === DASHBOARD_SERVICE_STATUS.DOWN,
+  ).length;
+  const rateLimited = services.filter(
+    (s) => s.status === DASHBOARD_SERVICE_STATUS.RATE_LIMITED,
   ).length;
   const activeMetricCard = getActiveMetricCard(statusFilters);
 
@@ -75,28 +80,36 @@ export function DashboardMetricCards({
       filter: DASHBOARD_SERVICE_STATUS.DOWN,
       icon: <XCircleIcon className="size-5 text-destructive" />,
     },
+    {
+      label: 'Rate Limited',
+      value: rateLimited,
+      filter: DASHBOARD_SERVICE_STATUS.RATE_LIMITED,
+      icon: <AlertTriangleIcon className="size-5 text-orange-500" />,
+    },
   ];
 
   return (
-    <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
+    <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-5 sm:gap-4">
       {metrics.map(({ label, value, icon, filter }) => (
         <button
           key={label}
           type="button"
-          onClick={() => onMetricFilterChange(filter)}
+          onClick={() => handleMetricFilterChange(filter)}
           className={cn(
-            'min-h-28 cursor-pointer rounded-lg border bg-card p-5 text-left transition-colors hover:border-accent-foreground/25 hover:bg-accent',
+            'min-h-24 cursor-pointer rounded-lg border bg-card p-4 text-left transition-colors hover:border-accent-foreground/25 hover:bg-accent sm:min-h-28 sm:p-5',
             activeMetricCard === filter &&
               'border-accent-foreground/20 bg-accent',
           )}
         >
           <div className="flex items-center justify-between">
-            <p className="text-base font-medium text-muted-foreground">
+            <p className="text-sm font-medium text-muted-foreground sm:text-base">
               {label}
             </p>
-            {icon}
+            <span className="shrink-0">{icon}</span>
           </div>
-          <p className="mt-3 text-4xl font-semibold">{value}</p>
+          <p className="mt-2 text-3xl font-semibold sm:mt-3 sm:text-4xl">
+            {value}
+          </p>
         </button>
       ))}
     </div>

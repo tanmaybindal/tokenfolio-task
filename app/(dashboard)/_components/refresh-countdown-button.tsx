@@ -5,15 +5,12 @@ import { useEffect, useState } from 'react';
 
 import { DASHBOARD_REFETCH_INTERVAL_MS } from '@/app/(dashboard)/_constants/dashboard';
 import { useGetServices } from '@/app/(dashboard)/_hooks/get-services';
-import { useRefreshServices } from '@/app/(dashboard)/_hooks/refresh-services';
 
 import { Button } from '../../../components/ui/button';
 
 export function RefreshCountdownButton() {
-  const { dataUpdatedAt } = useGetServices();
+  const { dataUpdatedAt, isFetching: isRefreshing, refetch } = useGetServices();
   const [now, setNow] = useState(dataUpdatedAt);
-  const { mutate: refreshServices, isPending: isRefreshing } =
-    useRefreshServices();
 
   useEffect(() => {
     const tick = setInterval(() => {
@@ -32,7 +29,7 @@ export function RefreshCountdownButton() {
     <Button
       variant="outline"
       size="lg"
-      onClick={() => refreshServices(undefined)}
+      onClick={() => void refetch()}
       disabled={isRefreshing}
       className="cursor-pointer text-muted-foreground max-lg:px-2.5"
       aria-label={isRefreshing ? 'Refreshing services' : 'Refresh services'}
