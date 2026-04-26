@@ -4,6 +4,7 @@ import {
   computeHealthScore,
   STATUS_WEIGHT,
 } from './health-checker';
+import { isInRateLimitWindow } from './rate-limit-window';
 import { applySeedsIfEmpty } from './seeds';
 import { readServices, writeServices } from './storage';
 
@@ -26,6 +27,10 @@ async function runChecks(): Promise<void> {
 
   const updated = await Promise.all(
     data.services.map(async (service) => {
+      if (isInRateLimitWindow(service.rateLimitedUntil)) {
+        return service;
+      }
+
       const result = await checkHealth(service.url);
       const weight = STATUS_WEIGHT[result.status];
       const { history, healthScore } = computeHealthScore(

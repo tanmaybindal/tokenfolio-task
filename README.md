@@ -74,6 +74,7 @@ SEED_ON_STARTUP=false pnpm dev
 ### Server-side health checks over client-side
 
 Health checks run server-side, not in the browser. Benefits:
+
 - No CORS restrictions on internal or non-public URLs
 - Data stays current even when no browser tab is open
 - Single writer prevents race conditions
@@ -81,10 +82,10 @@ Health checks run server-side, not in the browser. Benefits:
 
 **Two-environment scheduler design:**
 
-| Environment | Trigger | Interval |
-|-------------|---------|----------|
-| Local dev | `instrumentation.ts` → `setInterval` | 60s |
-| Vercel (production) | [cron-job.org](https://cron-job.org) → `GET /api/cron/health-check` | 1 min |
+| Environment         | Trigger                                                             | Interval |
+| ------------------- | ------------------------------------------------------------------- | -------- |
+| Local dev           | `instrumentation.ts` → `setInterval`                                | 60s      |
+| Vercel (production) | [cron-job.org](https://cron-job.org) → `GET /api/cron/health-check` | 1 min    |
 
 Vercel's serverless model gives each request a fresh Lambda instance — `setInterval` never persists. Vercel's native cron feature is limited to once-daily on the Hobby plan. An external cron service is the practical fix for free-tier deployments.
 
@@ -107,6 +108,7 @@ A service always UP scores 100. Always DOWN scores 0. One DOWN in 10 checks = �
 ### Rate limit handling
 
 When a service returns HTTP 429:
+
 - Status set to `RATE_LIMITED`, weight `0.0` (same as DOWN for score purposes)
 - `Retry-After` header parsed — handles both integer seconds and HTTP-date strings
 - Falls back to 5-minute cooldown if header absent
@@ -116,6 +118,7 @@ When a service returns HTTP 429:
 ### URL-backed dashboard state (nuqs)
 
 All dashboard state (view, search, status filters, sort, pagination) is stored in the URL via `nuqs`. This means:
+
 - Shareable URLs — paste a filtered view to a colleague and they see the same thing
 - Browser back/forward works correctly
 - No state loss on page refresh
@@ -128,21 +131,22 @@ Add/edit/delete dialogs use `DialogPrimitive.createHandle()` / `AlertDialogPrimi
 ### Duplicate URL enforcement
 
 Duplicate URLs are blocked at two levels:
+
 1. **API** — `POST /api/services` and `PATCH /api/services/[id]` compare normalised URLs against existing services and return `409 Conflict`
 2. **Client** — `ServiceDialog` checks the TanStack Query cache before submitting, providing immediate feedback without a round-trip
 
 ## Status Thresholds
 
-| Condition | Status |
-|-----------|--------|
-| HTTP 2xx, latency < 500ms | UP |
-| HTTP 2xx, latency 500–1999ms | SLOW |
-| HTTP 2xx, latency ≥ 2000ms | DOWN |
-| Non-2xx (except 429) | DOWN |
-| HTTP 429 | RATE_LIMITED |
-| Timeout (AbortSignal, 2s) | DOWN (errorKind: TIMEOUT) |
-| Network failure | DOWN (errorKind: NETWORK) |
-| Not yet checked | PENDING |
+| Condition                    | Status                    |
+| ---------------------------- | ------------------------- |
+| HTTP 2xx, latency < 500ms    | UP                        |
+| HTTP 2xx, latency 500–1999ms | SLOW                      |
+| HTTP 2xx, latency ≥ 2000ms   | DOWN                      |
+| Non-2xx (except 429)         | DOWN                      |
+| HTTP 429                     | RATE_LIMITED              |
+| Timeout (AbortSignal, 2s)    | DOWN (errorKind: TIMEOUT) |
+| Network failure              | DOWN (errorKind: NETWORK) |
+| Not yet checked              | PENDING                   |
 
 ## Known Issues & Limitations
 
@@ -150,20 +154,14 @@ Duplicate URLs are blocked at two levels:
 
 **Concurrent write race at scale.** The scheduler fires all health checks in parallel. Each check reads the full service list, updates one entry, and writes the full list back. Two checks finishing simultaneously can clobber each other's result. The fix is per-service read/write (`HGET`/`HSET` on the service's own Redis Hash field) so updates are field-scoped and independent. At the current scale (≤50 services, 60 s interval, checks completing within ~2 s), the race window is narrow and the practical impact is negligible — a result is occasionally overwritten and corrected on the next tick.
 
-**No check during rate-limit window.** When a service is `RATE_LIMITED` the scheduler still calls `checkHealth()` on it every 60s — the 429 will keep resetting the cooldown timer. Production fix: skip the check if `rateLimitedUntil` is in the future.
-
-**mock:// URLs are development-only.** The `mock://up`, `mock://slow`, `mock://down` URL scheme bypasses real network checks. They are useful for local dev and tests but should not appear in production seeds.
-
 **No persistent alerting.** The dashboard shows current status only — there is no webhook, email, or Slack notification when a service transitions to DOWN. This is a deliberate scope decision; adding it would require a status-change diff on each scheduler tick.
-
-**In-memory query cache only.** The browser cache is not persisted (no `localStorage` or `IndexedDB`). A hard refresh always refetches from the server. This is intentional for a server-side architecture — the server is the source of truth.
 
 ## Configuration
 
-| Env var | Default | Description |
-|---------|---------|-------------|
-| `SEED_ON_STARTUP` | `true` | Seed services from `config/seeds.json` on first run |
-| `DATA_DIR` | `./data` | Directory for the `services.json` runtime file |
+| Env var           | Default  | Description                                         |
+| ----------------- | -------- | --------------------------------------------------- |
+| `SEED_ON_STARTUP` | `true`   | Seed services from `config/seeds.json` on first run |
+| `DATA_DIR`        | `./data` | Directory for the `services.json` runtime file      |
 
 Edit `config/seeds.json` to configure which services are pre-loaded. Set the array to `[]` to start empty.
 
@@ -171,10 +169,10 @@ Edit `config/seeds.json` to configure which services are pre-loaded. Set the arr
 
 ### Environment variables
 
-| Env var | Description |
-|---------|-------------|
-| `CRON_SECRET` | Random hex string — cron-job.org sends this as `Authorization: Bearer <secret>` |
-| `SEED_ON_STARTUP` | `true` / `false` |
+| Env var           | Description                                                                     |
+| ----------------- | ------------------------------------------------------------------------------- |
+| `CRON_SECRET`     | Random hex string — cron-job.org sends this as `Authorization: Bearer <secret>` |
+| `SEED_ON_STARTUP` | `true` / `false`                                                                |
 
 ### cron-job.org setup
 
