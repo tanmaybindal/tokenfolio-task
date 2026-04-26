@@ -2,7 +2,7 @@
 
 An internal dashboard for monitoring the health and reliability of public APIs, built with Next.js App Router.
 
-> Note: There is a separate `server-side-architecture` branch exploring a server-side architecture approach. It is still a work in progress (WIP) and not complete yet.
+> Note: The `server-side-architecture` branch provides a mostly feature-complete server-side architecture variant. Some dashboard interactions, including search, sort, and filter, currently remain client-side.
 
 ## Quick Start
 
