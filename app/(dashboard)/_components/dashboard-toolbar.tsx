@@ -5,6 +5,7 @@ import {
   SearchIcon,
   TableIcon,
 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 import {
   DASHBOARD_SERVICE_STATUS,
@@ -31,6 +32,7 @@ import {
   InputGroupInput,
 } from '@/components/ui/input-group';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { useDebounce } from '@/hooks/use-debounce';
 
 import { useDashboardStateContext } from './dashboard-state-provider';
 import { RefreshCountdownButton } from './refresh-countdown-button';
@@ -47,6 +49,12 @@ export function DashboardToolbar() {
     sortOption,
     statusFilters,
   } = useDashboardStateContext();
+  const [inputSearch, setInputSearch] = useState(search);
+  const debouncedSearch = useDebounce(inputSearch, 300);
+
+  useEffect(() => {
+    handleSearchChange(debouncedSearch);
+  }, [debouncedSearch, handleSearchChange]);
 
   return (
     <div className="mb-4 flex items-center gap-3">
@@ -56,9 +64,9 @@ export function DashboardToolbar() {
         </InputGroupAddon>
         <InputGroupInput
           placeholder="Search services..."
-          value={search}
+          value={inputSearch}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-            handleSearchChange(e.target.value)
+            setInputSearch(e.target.value)
           }
           className="h-9"
         />
