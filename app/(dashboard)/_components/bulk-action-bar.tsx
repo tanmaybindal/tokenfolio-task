@@ -6,10 +6,8 @@ import { toast } from 'sonner';
 import {
   deleteServiceDialogHandle,
 } from '@/app/(dashboard)/_components/service-dialog-handles';
-import {
-  GET_SERVICES_QUERY_KEY,
-  useRefreshServices,
-} from '@/app/(dashboard)/_hooks/get-services';
+import { GET_SERVICES_QUERY_KEY } from '@/app/(dashboard)/_constants/query-keys';
+import { useRefreshServices } from '@/app/(dashboard)/_hooks/refresh-services';
 import { AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';

@@ -3,9 +3,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
+import { GET_SERVICES_QUERY_KEY } from '@/app/(dashboard)/_constants/query-keys';
 import { Service } from '@/types';
-
-import { GET_SERVICES_QUERY_KEY } from './get-services';
 
 export function useDeleteServices() {
   const queryClient = useQueryClient();

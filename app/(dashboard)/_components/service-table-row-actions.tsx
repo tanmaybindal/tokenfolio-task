@@ -2,7 +2,7 @@
 
 import { MoreHorizontalIcon } from 'lucide-react';
 
-import { useRefreshServices } from '@/app/(dashboard)/_hooks/get-services';
+import { useRefreshServices } from '@/app/(dashboard)/_hooks/refresh-services';
 import {
   deleteServiceDialogHandle,
   editServiceDialogHandle,
