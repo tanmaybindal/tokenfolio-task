@@ -15,7 +15,8 @@ interface ServiceTableDataProps {
 }
 
 export function ServiceTableData({ table }: ServiceTableDataProps) {
-  'use no memo'; // table ref is stable; row model / selection live inside TanStack (React Compiler)
+  // table ref is stable; row model / selection live inside TanStack (React Compiler)
+  'use no memo';
   const rows = table.getRowModel().rows;
   const pageSize = table.getState().pagination.pageSize;
   const fillerRowCount = Math.max(0, pageSize - rows.length);

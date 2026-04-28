@@ -50,3 +50,4 @@ CLAUDE.md
 
 # Runtime storage (created at startup; not needed in repo — resolveDataDir creates it)
 /data/
+.gitnexus/

@@ -4,13 +4,6 @@ import {
 } from '@/app/(dashboard)/_constants/dashboard';
 import { Service, ServiceStatus } from '@/types';
 
-interface GetDashboardServicesViewOptions {
-  services: Service[];
-  search: string;
-  sortOption: DashboardSortOption;
-  statusFilters: ServiceStatus[];
-}
-
 interface GetCardPaginationViewOptions {
   services: Service[];
   cardPageIndex: number;
@@ -84,31 +77,5 @@ export function getCardPaginationView({
     cardTotalPages,
     paginatedCards,
     totalCardResults: sortedCardServices.length,
-  };
-}
-
-export function getDashboardServicesView({
-  services,
-  search,
-  sortOption,
-  statusFilters,
-  cardPageIndex,
-  cardPageSize,
-}: GetDashboardServicesViewOptions & GetCardPaginationViewOptions) {
-  const filteredServices = getFilteredServices({
-    services,
-    search,
-    statusFilters,
-  });
-  const cardView = getCardPaginationView({
-    services: filteredServices,
-    sortOption,
-    cardPageIndex,
-    cardPageSize,
-  });
-
-  return {
-    filteredServices,
-    ...cardView,
   };
 }

@@ -6,7 +6,7 @@ import {
   deleteServiceDialogHandle,
   editServiceDialogHandle,
 } from '@/app/(dashboard)/_components/service-dialog-handles';
-import { useRefreshServices } from '@/app/(dashboard)/_hooks/get-services';
+import { useRefreshServices } from '@/app/(dashboard)/_hooks/refresh-services';
 import { AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { DialogTrigger } from '@/components/ui/dialog';

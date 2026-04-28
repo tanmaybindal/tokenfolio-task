@@ -1,6 +1,8 @@
 import { Bar, BarChart } from 'recharts';
 import type { BarShapeProps } from 'recharts';
 
+import { cn } from '@/lib/utils';
+
 const chartConfig = {
   up: { color: 'var(--color-green-600)' },
   slow: { color: 'var(--color-amber-500)' },
@@ -29,7 +31,10 @@ export function HealthHistoryBars({
   if (history.length === 0) {
     return (
       <div
-        className={`flex items-center text-xs text-muted-foreground ${className ?? ''}`}
+        className={cn(
+          'flex items-center text-xs text-muted-foreground',
+          className,
+        )}
       >
         No data yet
       </div>

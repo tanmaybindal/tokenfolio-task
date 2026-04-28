@@ -1,5 +1,5 @@
-import { CheckResult, SERVICE_ERROR_KIND, SERVICE_STATUS } from '@/types';
 import { DEFAULT_RATE_LIMIT_COOLDOWN_MS } from '@/lib/rate-limit';
+import { CheckResult, SERVICE_ERROR_KIND, SERVICE_STATUS } from '@/types';
 
 export const STATUS_WEIGHT = {
   [SERVICE_STATUS.UP]: 1.0,

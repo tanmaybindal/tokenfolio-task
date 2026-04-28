@@ -69,7 +69,7 @@ export async function PATCH(
     ...data.services[index],
     name,
     url,
-    // URL changes should trigger a fresh health check
+    // Reset health fields so scheduler recomputes status on its next run
     status: 'PENDING',
     latencyMs: null,
     lastCheckedAt: null,

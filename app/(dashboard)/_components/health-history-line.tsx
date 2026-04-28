@@ -1,5 +1,7 @@
 import { Line, LineChart } from 'recharts';
 
+import { cn } from '@/lib/utils';
+
 const LINE_COLORS: Record<string, string> = {
   UP: '#22c55e',
   SLOW: '#f59e0b',
@@ -21,7 +23,7 @@ export function HealthHistoryLine({
   className,
 }: HealthHistoryLineProps) {
   if (history.length < 2) {
-    return <div className={`h-7 w-20 ${className ?? ''}`} />;
+    return <div className={cn('h-7 w-20', className)} />;
   }
 
   const data = history.map((v, i) => ({ i, v }));
