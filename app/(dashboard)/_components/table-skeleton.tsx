@@ -1,5 +1,7 @@
 import { Skeleton } from '@/components/ui/skeleton';
 
+const COLUMN_WIDTHS = [36, 200, 80, 80, 120, 55, 100, 44];
+
 export function TableSkeleton({ rows = 4 }: { rows?: number }) {
   return (
     <div className="overflow-hidden rounded-lg border bg-card">
@@ -7,7 +9,7 @@ export function TableSkeleton({ rows = 4 }: { rows?: number }) {
         <Skeleton className="h-5 w-36" />
       </div>
       <div className="flex items-center gap-4 border-b px-4 py-3">
-        {[36, 200, 80, 80, 120, 55, 100, 44].map((w, i) => (
+        {COLUMN_WIDTHS.map((w, i) => (
           <Skeleton key={i} className="h-4" style={{ width: w }} />
         ))}
       </div>

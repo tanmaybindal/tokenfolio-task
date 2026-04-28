@@ -1,6 +1,8 @@
 import { Bar, BarChart } from 'recharts';
 import type { BarShapeProps } from 'recharts';
 
+import { STATUS_WEIGHT } from '@/constants/status-weight';
+
 const chartConfig = {
   up: { color: 'var(--color-green-600)' },
   slow: { color: 'var(--color-amber-500)' },
@@ -10,8 +12,8 @@ const chartConfig = {
 
 function statusColor(value: number | null): string {
   if (value == null) return chartConfig.pending.color;
-  if (value === 1.0) return chartConfig.up.color;
-  if (value === 0.5) return chartConfig.slow.color;
+  if (value === STATUS_WEIGHT.UP) return chartConfig.up.color;
+  if (value === STATUS_WEIGHT.SLOW) return chartConfig.slow.color;
   return chartConfig.down.color;
 }
 
@@ -37,8 +39,12 @@ export function HealthHistoryBars({
   }
 
   // Always render 10 bars. New services start with gray placeholders.
-  const paddedHistory: Array<number | null> = [...history].slice(-10);
-  while (paddedHistory.length < 10) paddedHistory.unshift(null);
+  const raw = history.slice(-10);
+  const paddedHistory: Array<number | null> = [
+    ...Array(10 - raw.length).fill(null),
+    ...raw,
+  ];
+
   // Keep statusValue for colour lookup; bar is always 1 so every bar is full-height.
   const data = paddedHistory.map((statusValue, i) => ({
     i,

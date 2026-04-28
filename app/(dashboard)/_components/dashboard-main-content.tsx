@@ -1,10 +1,7 @@
 import dynamic from 'next/dynamic';
 
 import { DASHBOARD_VIEW } from '@/app/(dashboard)/_constants/dashboard';
-import {
-  getCardPaginationView,
-  getFilteredServices,
-} from '@/app/(dashboard)/_libs/get-dashboard-services-view';
+import { getFilteredServices } from '@/app/(dashboard)/_libs/get-dashboard-services-view';
 import { Service } from '@/types';
 
 import { DashboardCardsSection } from './dashboard-cards-section';
@@ -22,26 +19,12 @@ interface DashboardMainContentProps {
 }
 
 export function DashboardMainContent({ services }: DashboardMainContentProps) {
-  const {
-    cardPageIndex,
-    cardPageSize,
-    dashboardView,
-    search,
-    sortOption,
-    statusFilters,
-  } = useDashboardStateContext();
+  const { dashboardView, search, statusFilters } = useDashboardStateContext();
   const filteredServices = getFilteredServices({
     services,
     search,
     statusFilters,
   });
-  const { cardStart, cardTotalPages, paginatedCards, totalCardResults } =
-    getCardPaginationView({
-      services: filteredServices,
-      sortOption,
-      cardPageIndex,
-      cardPageSize,
-    });
 
   if (services.length === 0) {
     return <EmptyServices />;
@@ -49,10 +32,7 @@ export function DashboardMainContent({ services }: DashboardMainContentProps) {
 
   const renderCardsSection = (paginationViewport: 'mobile' | 'desktop') => (
     <DashboardCardsSection
-      services={paginatedCards}
-      totalResults={totalCardResults}
-      cardStart={cardStart}
-      cardTotalPages={cardTotalPages}
+      services={filteredServices}
       paginationViewport={paginationViewport}
     />
   );

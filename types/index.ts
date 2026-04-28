@@ -5,8 +5,12 @@ export const SERVICE_STATUS = {
   RATE_LIMITED: 'RATE_LIMITED',
   PENDING: 'PENDING',
 } as const;
-export type ServiceStatus = (typeof SERVICE_STATUS)[keyof typeof SERVICE_STATUS];
-export const SERVICE_STATUSES = Object.values(SERVICE_STATUS) as ServiceStatus[];
+export type ServiceStatus =
+  (typeof SERVICE_STATUS)[keyof typeof SERVICE_STATUS];
+export const SERVICE_STATUSES = Object.values(
+  SERVICE_STATUS,
+) as ServiceStatus[];
+
 export const SERVICE_ERROR_KIND = {
   HTTP: 'HTTP',
   TIMEOUT: 'TIMEOUT',
@@ -28,10 +32,6 @@ export interface Service {
   rateLimitedUntil?: string | null;
   lastHttpStatus?: number | null;
   lastErrorKind?: ServiceErrorKind | null;
-}
-
-export interface ServicesData {
-  services: Service[];
 }
 
 export interface CheckResult {

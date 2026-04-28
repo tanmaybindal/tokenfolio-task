@@ -20,17 +20,31 @@ interface ServiceTablePaginationProps {
 }
 
 export function ServiceTablePagination({ table }: ServiceTablePaginationProps) {
-  'use no memo'; // table ref is stable; pagination state is internal (React Compiler)
+  // table ref is stable; pagination state is internal (React Compiler)
+  'use no memo';
+
+  // Total number of rows across all pages (unaffected by current page view)
   const totalRows = table.getCoreRowModel().rows.length;
   const { pageIndex, pageSize } = table.getState().pagination;
   const pageCount = table.getPageCount();
 
+  // Convert 0-based pageIndex to a 1-based display range, e.g. page 2 with
+  // pageSize 10 → rows 21–30. firstRow is 0 when the table is empty.
   const firstRow = totalRows > 0 ? pageIndex * pageSize + 1 : 0;
+
+  // Cap lastRow at totalRows so the final (possibly partial) page doesn't
+  // overshoot — e.g. 23 total rows, page 3 of 10: lastRow is 23, not 30.
   const lastRow = Math.min((pageIndex + 1) * pageSize, totalRows);
 
+  // Build the slice of page numbers to render as buttons. We keep at most
+  // VISIBLE_PAGE_RADIUS pages on either side of the current page, clamped
+  // to the valid range [0, pageCount - 1] so we never render phantom pages.
   const visiblePages = useMemo(() => {
     const pages: number[] = [];
     const start = Math.max(0, pageIndex - VISIBLE_PAGE_RADIUS);
+    // pageCount - 1: indices are 0-based, so the last valid index is one less
+    // than the total (e.g. 5 pages → indices 0–4). Without the -1, end could
+    // equal pageCount and push a non-existent page index into the list.
     const end = Math.min(pageCount - 1, pageIndex + VISIBLE_PAGE_RADIUS);
     for (let i = start; i <= end; i++) pages.push(i);
     return pages;

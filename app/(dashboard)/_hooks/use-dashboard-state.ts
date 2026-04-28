@@ -17,11 +17,13 @@ import {
 } from '@/app/(dashboard)/_constants/dashboard';
 import { SERVICE_STATUSES, ServiceStatus } from '@/types';
 
+// Stable fallback used when URL has no valid status selection.
 const defaultStatusFilters: ServiceStatus[] = [
   ...DASHBOARD_DEFAULT_STATUS_FILTERS,
 ];
 
 function parseStatusFilters(value: string) {
+  // URL format: "UP,SLOW,DOWN". Ignore unknown values.
   const parsed = value
     .split(',')
     .map((status) => status.trim().toUpperCase())
@@ -33,12 +35,14 @@ function parseStatusFilters(value: string) {
 }
 
 function parseDashboardView(value: string): DashboardView {
+  // Accept only supported view ids from the URL.
   return value === DASHBOARD_VIEW.CARD || value === DASHBOARD_VIEW.TABLE
     ? value
     : DASHBOARD_DEFAULT_VIEW;
 }
 
 function parseSortOption(value: string): DashboardSortOption {
+  // Keep deep-linking safe: invalid values fall back to default sort.
   return Object.values(DASHBOARD_SORT_OPTION).includes(
     value as DashboardSortOption,
   )
@@ -64,6 +68,7 @@ export function useDashboardState() {
       cardPageIndex: parseAsIndex.withDefault(0),
       cardPageSize: parseAsInteger.withDefault(16),
     });
+
   const [sortOptionParam, setSortOptionParam] = useQueryState(
     'sort',
     parseAsString.withDefault(DASHBOARD_SORT_OPTION.NAME_ASC),
@@ -77,6 +82,7 @@ export function useDashboardState() {
     [statusFilterParam],
   );
 
+  // Most filter/sort/search changes return to page 1.
   const resetCardPagination = useCallback(() => {
     void setCardPaginationState({ cardPageIndex: 0 });
   }, [setCardPaginationState]);
@@ -91,6 +97,7 @@ export function useDashboardState() {
 
   const handleViewChange = useCallback(
     (values: string[]) => {
+      // ToggleGroup passes an array; we only use the first selected value.
       const nextView = values[0];
 
       if (
@@ -114,12 +121,14 @@ export function useDashboardState() {
 
   const handleStatusToggle = useCallback(
     (status: ServiceStatus) => {
+      // Multi-select behavior: toggle one status on/off.
       const next = statusFilters.includes(status)
         ? statusFilters.filter((filter) => filter !== status)
         : [...statusFilters, status];
 
       resetCardPagination();
       void setStatusFilterParam(
+        // Never persist an empty set; fall back to defaults.
         (next.length > 0 ? next : defaultStatusFilters).join(','),
       );
     },
@@ -128,6 +137,7 @@ export function useDashboardState() {
 
   const handleMetricFilterChange = useCallback(
     (filter: ServiceStatus | 'ALL') => {
+      // Metric cards are single-choice shortcuts ("ALL" restores defaults).
       void setStatusFilterParam(
         (filter === 'ALL' ? defaultStatusFilters : [filter]).join(','),
       );
@@ -139,6 +149,7 @@ export function useDashboardState() {
   const handlePageIndexChange = useCallback(
     (updater: (prev: number) => number) => {
       const next = updater(cardPageIndex);
+      // Clamp at zero to avoid negative pages from custom updaters.
       void setCardPaginationState({ cardPageIndex: Math.max(0, next) });
     },
     [cardPageIndex, setCardPaginationState],

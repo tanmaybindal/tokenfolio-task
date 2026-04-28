@@ -5,7 +5,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-import { GET_SERVICES_QUERY_KEY } from '@/app/(dashboard)/_hooks/get-services';
+import { GET_SERVICES_QUERY_KEY } from '@/app/(dashboard)/_constants/query-keys';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,

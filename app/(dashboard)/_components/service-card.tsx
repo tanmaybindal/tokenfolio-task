@@ -2,7 +2,7 @@
 
 import { MoreHorizontalIcon } from 'lucide-react';
 
-import { useRefreshServices } from '@/app/(dashboard)/_hooks/get-services';
+import { useRefreshServices } from '@/app/(dashboard)/_hooks/refresh-services';
 import { formatLatencyParts } from '@/app/(dashboard)/_libs/format-latency-parts';
 import { AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';

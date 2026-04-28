@@ -1,6 +1,7 @@
 'use client';
 
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
+import { useMemo } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { ButtonGroup, ButtonGroupText } from '@/components/ui/button-group';
@@ -12,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+
 import { useDashboardStateContext } from './dashboard-state-provider';
 
 interface CardsPaginationDesktopProps {
@@ -49,6 +51,15 @@ export function CardsPaginationDesktop({
     handlePageSelect,
     handlePageSizeChange,
   } = useDashboardStateContext();
+
+  const visiblePages = useMemo(() => {
+    const radius = 2;
+    const start = Math.max(0, cardPageIndex - radius);
+    const end = Math.min(cardTotalPages - 1, cardPageIndex + radius);
+    const pages: number[] = [];
+    for (let i = start; i <= end; i++) pages.push(i);
+    return pages;
+  }, [cardPageIndex, cardTotalPages]);
 
   return (
     <div className="mt-4 flex items-center justify-between">
@@ -95,17 +106,17 @@ export function CardsPaginationDesktop({
           >
             <ChevronLeftIcon className="size-4" />
           </Button>
-          {Array.from({ length: cardTotalPages }, (_, i) => (
+          {visiblePages.map((page) => (
             <Button
-              key={i}
-              variant={cardPageIndex === i ? 'default' : 'outline'}
+              key={page}
+              variant={cardPageIndex === page ? 'default' : 'outline'}
               size="icon"
-              onClick={() => handlePageSelect(i)}
+              onClick={() => handlePageSelect(page)}
               className="size-8 cursor-pointer"
-              aria-label={`Go to page ${i + 1}`}
-              aria-current={cardPageIndex === i ? 'page' : undefined}
+              aria-label={`Go to page ${page + 1}`}
+              aria-current={cardPageIndex === page ? 'page' : undefined}
             >
-              {i + 1}
+              {page + 1}
             </Button>
           ))}
           <Button
